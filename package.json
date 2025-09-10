@@ -1,0 +1,24 @@
+{
+  "name": "@ifc-x/convert",
+  "version": "0.0.1",
+  "description": "",
+  "type": "module",
+  "main": "src/index.js",
+  "bin": {
+    "ifc-x-convert": "bin/cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Lauri Tunnela <lauri@tunne.la>",
+  "license": "MIT",
+  "dependencies": {
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
+    "web-ifc": "^0.0.71"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}
