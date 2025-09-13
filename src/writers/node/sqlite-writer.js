@@ -5,11 +5,38 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+/**
+ * SQLite writer for persisting IFC/FRAG data into a relational database file.
+ *
+ * - Creates two tables: `Entities` (attributes) and `Hierarchy` (parent-child relations).
+ * - Supports progress tracking during row and relation insertion.
+ * - Produces a `Uint8Array` of the final SQLite file contents.
+ *
+ * @extends BaseWriter
+ */
 export default class SqliteWriter extends BaseWriter {
+  /** @type {string[]} Supported output formats */
   static formats = ["db", "db3", "sqlite", "sqlite3"];
+
+  /** @type {string[]} Supported environments */
   static environments = ["node"];
+
+  /** @type {number} Priority when multiple writers are registered */
   static priority = 10;
 
+  /**
+   * Write parsed data into a SQLite database file.
+   *
+   * @param {Object} data - Structured model data.
+   * @param {Object.<string, number>} data.columns - Column definitions where keys are column names and values are numeric type codes (1=INTEGER, 2=INTEGER, 3=REAL, else TEXT).
+   * @param {Object.<string, Object>} data.rows - Entity rows keyed by ID, each containing column-value pairs.
+   * @param {Array<{ancestor: number, descendant: number, depth: number}>} data.relations - Hierarchical relations between entities.
+   *
+   * @param {Object} options - Write options.
+   * @param {(progress: number) => void} [options.progressCallback] - Progress callback (0–1).
+   *
+   * @returns {Promise<Uint8Array>} SQLite file contents as a `Uint8Array`.
+   */
   async write({ columns, rows, relations }, { progressCallback }) {
     this.initProgress();
 
@@ -134,6 +161,9 @@ export default class SqliteWriter extends BaseWriter {
     return data;
   }
 
+  /**
+   * Initialize internal progress counters.
+   */
   initProgress() {
     this.step = 1;
     this.totalRows = 0;
@@ -143,6 +173,14 @@ export default class SqliteWriter extends BaseWriter {
     this.progressCallback = null;
   }
 
+  /**
+   * Emit progress to the callback if defined.
+   *
+   * - Rows contribute up to 50% of total progress.
+   * - Relations contribute up to 50% (after step 2 begins).
+   *
+   * @private
+   */
   emitProgress() {
     if (!this.progressCallback) {
       return;

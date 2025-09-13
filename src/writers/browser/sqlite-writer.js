@@ -2,11 +2,39 @@ import { BaseWriter } from "../../adapters/base-writer.js";
 import initSqlJs from "sql.js";
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 
+/**
+ * SQLite writer for the browser, implemented with `sql.js` (WASM).
+ *
+ * - Creates two tables: `Entities` (entity attributes) and `Hierarchy` (parent-child relations).
+ * - Exports a SQLite binary as a `Uint8Array`, suitable for saving or downloading.
+ * - Reports progress during row and relation insertion.
+ *
+ * @extends BaseWriter
+ */
 export default class SqliteWriter extends BaseWriter {
+  /** @type {string[]} Supported output formats */
   static formats = ["db", "db3", "sqlite", "sqlite3"];
+
+  /** @type {string[]} Supported environments */
   static environments = ["browser"];
+
+  /** @type {number} Priority when multiple writers are registered */
   static priority = 10;
 
+  /**
+   * Write parsed IFC/FRAG data into a SQLite database in the browser.
+   *
+   * @param {Object} data - Structured model data.
+   * @param {Object.<string, number>} data.columns - Column definitions.  
+   *   Keys = column names, values = numeric type codes (1=INTEGER, 2=INTEGER, 3=REAL, else TEXT).
+   * @param {Object.<string, Object>} data.rows - Entity rows keyed by ID, each containing column-value pairs.
+   * @param {Array<{ancestor: number, descendant: number, depth: number}>} data.relations - Hierarchical relations.
+   *
+   * @param {Object} options - Write options.
+   * @param {(progress: number) => void} [options.progressCallback] - Progress callback (0–1).
+   *
+   * @returns {Promise<Uint8Array>} SQLite database as a `Uint8Array`.
+   */
   async write({ columns, rows, relations }, { progressCallback }) {
     this.initProgress();
 
@@ -110,6 +138,9 @@ export default class SqliteWriter extends BaseWriter {
     return data;
   }
 
+  /**
+   * Initialize internal progress counters.
+   */
   initProgress() {
     this.step = 1;
     this.totalRows = 0;
@@ -119,6 +150,14 @@ export default class SqliteWriter extends BaseWriter {
     this.progressCallback = null;
   }
 
+  /**
+   * Emit progress to the callback if defined.
+   *
+   * - Rows contribute up to 50% of total progress.
+   * - Relations contribute up to 50% (after step 2 begins).
+   *
+   * @private
+   */
   emitProgress() {
     if (!this.progressCallback) {
       return;
