@@ -18,9 +18,10 @@ if (typeof window === "undefined") {
 /**
  * Quick convert utility using global registry.
  * 
- * @param {string|File|Blob} input - input data or file
+ * @param {string|File|Blob|ArrayBuffer|Uint8Array} input - input data or file
  * @param {object} options - optional overrides
- *   - type: string (frag, ifc, etc.)
+ *   - inputType: string (ifc, frag, etc.)
+ *   - outputType: string (sqlite, db, xlsx, etc.)
  *   - env: string (node/browser)
  *   - readerClass: force specific reader
  *   - writerClass: force specific writer
@@ -28,13 +29,13 @@ if (typeof window === "undefined") {
  *   - progressCallback: progress callback function
  */
 export async function convert(input, options = {}) {
-  const { middleware = [], readerClass, writerClass, env, type, progressCallback } = options;
+  const { middleware = [], readerClass, writerClass, env, inputType, outputType, progressCallback } = options;
 
   const converter = new Converter({ env, readerClass, writerClass });
 
   middleware.forEach(fn => converter.use(fn));
 
-  return converter.convert(input, { type, progressCallback });
+  return converter.convert(input, { inputType, outputType, progressCallback });
 }
 
 export { Converter, registry };

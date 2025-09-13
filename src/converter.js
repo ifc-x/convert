@@ -65,14 +65,15 @@ export default class Converter {
 
   /**
    * Get the writer instance.
+   * @param {string} type - The file type to write.
    * @returns {Object} Writer instance.
    * @throws {Error} If no writer is registered for the environment.
    */
-  getWriter() {
+  getWriter(type) {
     if (this.forcedWriter) return new this.forcedWriter();
-    const WriterClass = registry.findWriter(this.env);
+    const WriterClass = registry.findWriter(this.env, type);
     if (!WriterClass) {
-      throw new Error(`No writer registered for db env=${this.env}`);
+      throw new Error(`No writer registered for type=${type} env=${this.env}`);
     }
     return new WriterClass();
   }
@@ -137,10 +138,12 @@ export default class Converter {
    * @param {Function} [options.progressCallback] - Callback for progress updates (0–100).
    * @returns {Promise<Uint8Array>} Converted output as a Uint8Array.
    */
-  async convert(input, { type, progressCallback } = {}) {
-    const detectedType = type || this.detectType(input);
-    let reader = this.getReader(detectedType);
-    let writer = this.getWriter();
+  async convert(input, { inputType, outputType, progressCallback } = {}) {
+    const detectedInputType = inputType || this.detectType(input);
+    const detectedOutputType = outputType;
+
+    let reader = this.getReader(detectedInputType);
+    let writer = this.getWriter(detectedOutputType);
     let progress = null;
     
     const emitProgress = (newProgress) => {
@@ -160,7 +163,7 @@ export default class Converter {
     let data = await reader.read(
       await this.toUint8Array(input), 
       { 
-        type: detectedType, 
+        type: detectedInputType, 
         progressCallback: (progress) => emitProgress(progress * 0.5)
       }
     );
@@ -171,7 +174,7 @@ export default class Converter {
     return writer.write(
       data, 
       { 
-        type: detectedType, 
+        type: detectedOutputType, 
         progressCallback: (progress) => emitProgress(0.5 + progress * 0.5) 
       }
     );

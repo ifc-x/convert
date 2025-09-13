@@ -17,7 +17,8 @@ async function run() {
     const data = new Uint8Array(fs.readFileSync(inputFile));
 
     const result = await convert(data, {
-      type: "ifc",
+      inputType: "ifc",
+      outputType: "sqlite",
       progressCallback: (progress) => console.log(progress),
     });
 
