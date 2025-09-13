@@ -8,17 +8,20 @@
     "ifc-x-convert": "bin/cli.js"
   },
   "scripts": {
+    "examples": "vite --config vite.config.examples.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "Lauri Tunnela <lauri@tunne.la>",
   "license": "MIT",
   "dependencies": {
+    "sql.js": "^1.13.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",
     "web-ifc": "^0.0.71"
   },
   "devDependencies": {
+    "vite": "^7.1.5",
     "vitest": "^3.2.4"
   }
 }
