@@ -22,10 +22,8 @@ async function run() {
     });
 
     fs.writeFileSync(outputFile, Buffer.from(result));
-
-    console.log(`Conversion complete: ${outputFile}`);
   } catch (err) {
-    console.error("Error during conversion:", err);
+    console.error(`Error: ${err}`);
   }
 }
 

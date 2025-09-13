@@ -128,6 +128,7 @@ export default class IfcReader extends BaseReader {
     super();
     
     this.ifcAPI = new WebIfc.IfcAPI();
+
     this.modelID = null;
   }
 
@@ -139,6 +140,8 @@ export default class IfcReader extends BaseReader {
     this.emitProgress();
 
     await this.ifcAPI.Init();
+    
+    this.ifcAPI.SetLogLevel(WebIfc.LogLevel.LOG_LEVEL_OFF);
 
     this.modelID = this.ifcAPI.OpenModel(input);
 

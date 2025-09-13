@@ -129,6 +129,7 @@ export default class IfcReaderBrowser extends BaseReader {
     super();
 
     this.ifcAPI = new WebIfc.IfcAPI();
+
     this.modelID = null;
   }
 
@@ -145,6 +146,8 @@ export default class IfcReaderBrowser extends BaseReader {
       }
       return fileName;
     });
+    
+    this.ifcAPI.SetLogLevel(WebIfc.LogLevel.LOG_LEVEL_OFF);
 
     this.modelID = this.ifcAPI.OpenModel(input);
 
