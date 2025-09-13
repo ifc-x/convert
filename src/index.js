@@ -1,26 +1,19 @@
 import Converter from "./converter.js";
 import { registry } from "./registry.js";
 
-// ----------------------------
-// Built-in Node readers
-// ----------------------------
-import IfcReaderNode from "./readers/node/ifc-reader.js";
-import SqliteWriterNode from "./writers/node/sqlite-writer.js";
+if (typeof window === "undefined") {
+  const IfcReaderNode = await import("./readers/node/ifc-reader.js");
+  const SqliteWriterNode = await import("./writers/node/sqlite-writer.js");
 
-// ----------------------------
-// Built-in Browser readers
-// ----------------------------
-import IfcReaderBrowser from "./readers/browser/ifc-reader.js";
-import SqliteWriterBrowser from "./writers/browser/sqlite-writer.js";
+  registry.addReader(IfcReaderNode.default);
+  registry.addWriter(SqliteWriterNode.default);
+} else {
+  const IfcReaderBrowser = await import("./readers/browser/ifc-reader-async.js");
+  const SqliteWriterBrowser = await import("./writers/browser/sqlite-writer-async.js");
 
-// ----------------------------
-// Register built-in adapters
-// ----------------------------
-registry.addReader(IfcReaderNode);
-registry.addReader(IfcReaderBrowser);
-
-registry.addWriter(SqliteWriterNode);
-registry.addWriter(SqliteWriterBrowser);
+  registry.addReader(IfcReaderBrowser.default);
+  registry.addWriter(SqliteWriterBrowser.default);
+}
 
 /**
  * Quick convert utility using global registry.

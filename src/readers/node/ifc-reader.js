@@ -13,7 +13,7 @@ const base64Chars = [
 ];
 const base64Map = Object.fromEntries(base64Chars.map((c, i) => [c, i]));
 
-/**
+/**a
  * Convert compressed 22-char IFC GlobalId → 36-char GUID
  */
 function ifcGuidToGuid(globalId) {
@@ -126,7 +126,7 @@ export default class IfcReader extends BaseReader {
 
   constructor() {
     super();
-
+    
     this.ifcAPI = new WebIfc.IfcAPI();
     this.modelID = null;
   }
@@ -147,7 +147,7 @@ export default class IfcReader extends BaseReader {
     }
     const relations = this.buildRelationsClosure(this.getRelations());
 
-    await this.countEntities();
+    this.updateTotalEntities();
 
     const ids = this.ifcAPI.GetLineIDsWithType(this.modelID, WebIfc.IFCRELDEFINESBYPROPERTIES);
     const columns = {
@@ -290,10 +290,10 @@ export default class IfcReader extends BaseReader {
     }
     this.close();
 
-    return { type: "ifc", columns, rows, relations };
+    return { columns, rows, relations };
   }
   
-  countEntities() {
+  updateTotalEntities() {
     this.totalEntities = 0;
 
     const entityTypes = this.entityTypes.slice(0);
@@ -359,16 +359,13 @@ export default class IfcReader extends BaseReader {
   }
 
   initProgress() {
-    this.step = 1;
     this.totalEntities = 0;
     this.processedEntities = 0;
     this.progressCallback = null;
   }
 
   emitProgress() {
-    var totalEntities = this.processedEntities / (this.totalEntities || 1);
-
-    this.progressCallback(totalEntities);
+    this.progressCallback(this.processedEntities / (this.totalEntities || 1));
   }
 
   close() {

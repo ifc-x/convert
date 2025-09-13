@@ -1,4 +1,8 @@
 .DS_Store
 node_modules/
-*.db
 *.ifc
+*.frag
+*.db
+*.db3
+*.sqlite
+*.sqlite3

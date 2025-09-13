@@ -1,9 +1,12 @@
 import { BaseWriter } from "../../adapters/base-writer.js";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
 
 export default class SqliteWriter extends BaseWriter {
-  static formats = ["db"];
+  static formats = ["db", "db3", "sqlite", "sqlite3"];
   static environments = ["node"];
   static priority = 10;
 
@@ -103,9 +106,32 @@ export default class SqliteWriter extends BaseWriter {
         );
       } catch (e) {}
     }
-    await db.close();
 
-    return true;
+    const tempFilePath = path.join(os.tmpdir(), `tempdb-${Date.now()}.sqlite`);
+
+    await new Promise((resolve, reject) => {
+      const backup = db.getDatabaseInstance().backup(tempFilePath);
+
+      backup.step(-1, function(err) {
+        if (err) {
+          reject(err);
+          return;
+        }
+        backup.finish(function(err) {
+          if (err) {
+            reject(err);
+            return;
+          }
+          resolve();
+        });
+      });
+    });
+
+    const data = new Uint8Array(fs.readFileSync(tempFilePath));
+
+    await db.close();
+    
+    return data;
   }
 
   initProgress() {

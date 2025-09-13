@@ -19,7 +19,7 @@ class Registry {
     return matches[0];
   }
 
-  findWriter(env, format = "db") {
+  findWriter(env, format = "sqlite") {
     const matches = this.writers
       .filter(w => w.environments.includes(env) && w.formats.includes(format))
       .sort((a, b) => b.priority - a.priority);

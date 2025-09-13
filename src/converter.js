@@ -62,6 +62,29 @@ export default class Converter {
     this.progressCallback && this.progressCallback(this.progress);
   }
 
+  async toUint8Array(input) {
+    if (input instanceof Uint8Array) {
+      return input;
+    }
+    if (input instanceof ArrayBuffer) {
+      return new Uint8Array(input);
+    }
+    if (typeof input === "string") {
+      const response = await fetch(input);
+      const buffer = await response.arrayBuffer();
+      return new Uint8Array(buffer);
+    }
+    if (
+      (typeof File !== "undefined" && input instanceof File) ||
+      (typeof Blob !== "undefined" && input instanceof Blob)
+    ) {
+      const buffer = await input.arrayBuffer();
+
+      return new Uint8Array(buffer);
+    }
+    throw new Error("Cannot convert input to Uint8Array");
+  }
+
   async convert(input, { type, progressCallback } = {}) {
     const detectedType = type || this.detectType(input);
     let reader = this.getReader(detectedType);
@@ -83,7 +106,7 @@ export default class Converter {
     };
 
     let data = await reader.read(
-      input, 
+      await this.toUint8Array(input), 
       { 
         type: detectedType, 
         progressCallback: (progress) => emitProgress(progress * 0.5)
