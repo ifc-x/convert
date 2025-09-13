@@ -1,7 +1,17 @@
 import { registry } from "./registry.js";
 import path from "path";
 
+/**
+ * Class for converting IFC files to various formats like SQLite or Excel.
+ */
 export default class Converter {
+  /**
+   * Create a new Converter instance.
+   * @param {Object} [options] - Configuration options.
+   * @param {"node"|"browser"} [options.env] - Environment the converter runs in.
+   * @param {Function} [options.readerClass] - Forced reader class to use instead of auto-detection.
+   * @param {Function} [options.writerClass] - Forced writer class to use instead of auto-detection.
+   */
   constructor({ env, readerClass, writerClass } = {}) {
     this.env = env || (typeof window === "undefined" ? "node" : "browser");
     this.forcedReader = readerClass;
@@ -9,11 +19,22 @@ export default class Converter {
     this.middleware = [];
   }
 
+  /**
+   * Add a middleware function to transform data during conversion.
+   * @param {Function} fn - Middleware function that receives and returns data.
+   * @returns {Converter} The converter instance (chainable).
+   */
   use(fn) {
     this.middleware.push(fn);
-    return this; // chainable
+    return this;
   }
 
+  /**
+   * Detect the type/extension of the input file or blob.
+   * @param {string|File|Blob} input - The input to detect the type of.
+   * @returns {string} The detected file type (extension).
+   * @throws {Error} When type cannot be detected.
+   */
   detectType(input) {
     if (typeof input === "string" && input.includes(".")) {
       return path.extname(input).slice(1).toLowerCase();
@@ -27,6 +48,12 @@ export default class Converter {
     throw new Error("Unable to detect type — pass { type } explicitly");
   }
 
+  /**
+   * Get the reader instance for a given type.
+   * @param {string} type - The file type to read.
+   * @returns {Object} Reader instance.
+   * @throws {Error} If no reader is registered for the type.
+   */
   getReader(type) {
     if (this.forcedReader) return new this.forcedReader();
     const ReaderClass = registry.findReader(this.env, type);
@@ -36,6 +63,11 @@ export default class Converter {
     return new ReaderClass();
   }
 
+  /**
+   * Get the writer instance.
+   * @returns {Object} Writer instance.
+   * @throws {Error} If no writer is registered for the environment.
+   */
   getWriter() {
     if (this.forcedWriter) return new this.forcedWriter();
     const WriterClass = registry.findWriter(this.env);
@@ -45,12 +77,18 @@ export default class Converter {
     return new WriterClass();
   }
 
+  /**
+   * Initialize progress tracking.
+   */
   initProgress() {
-    this.progress = null;
     this.progress = null;
     this.progressCallback = null;
   }
 
+  /**
+   * Emit progress to the registered progress callback.
+   * @param {number} progress - Progress as a decimal (0–1).
+   */
   emitProgress(progress) {
     var currentProgress = this.progress;
 
@@ -62,6 +100,12 @@ export default class Converter {
     this.progressCallback && this.progressCallback(this.progress);
   }
 
+  /**
+   * Convert input into a Uint8Array.
+   * @param {string|ArrayBuffer|Uint8Array|File|Blob} input - The input to convert.
+   * @returns {Promise<Uint8Array>} The input as a Uint8Array.
+   * @throws {Error} If input cannot be converted.
+   */
   async toUint8Array(input) {
     if (input instanceof Uint8Array) {
       return input;
@@ -85,6 +129,14 @@ export default class Converter {
     throw new Error("Cannot convert input to Uint8Array");
   }
 
+  /**
+   * Convert a file or buffer to the desired output format using optional middleware.
+   * @param {string|ArrayBuffer|Uint8Array|File|Blob} input - Input file or data.
+   * @param {Object} [options] - Conversion options.
+   * @param {string} [options.type] - Explicit type of the input.
+   * @param {Function} [options.progressCallback] - Callback for progress updates (0–100).
+   * @returns {Promise<Uint8Array>} Converted output as a Uint8Array.
+   */
   async convert(input, { type, progressCallback } = {}) {
     const detectedType = type || this.detectType(input);
     let reader = this.getReader(detectedType);
