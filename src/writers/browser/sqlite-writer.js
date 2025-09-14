@@ -1,6 +1,5 @@
 import { BaseWriter } from "../../adapters/base-writer.js";
 import initSqlJs from "sql.js";
-import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 
 /**
  * SQLite writer for the browser, implemented with `sql.js` (WASM).
@@ -11,7 +10,7 @@ import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
  *
  * @extends BaseWriter
  */
-export default class SqliteWriter extends BaseWriter {
+export default class SqliteWriterBrowser extends BaseWriter {
   /** @type {string[]} Supported output formats */
   static formats = ["db", "db3", "sqlite", "sqlite3"];
 
@@ -20,6 +19,9 @@ export default class SqliteWriter extends BaseWriter {
 
   /** @type {number} Priority when multiple writers are registered */
   static priority = 10;
+
+  /** @type {string[]} Supported input types */
+  static inputs = ["tabular"];
 
   /**
    * Write parsed IFC/FRAG data into a SQLite database in the browser.
@@ -37,55 +39,54 @@ export default class SqliteWriter extends BaseWriter {
    */
   async write({ columns, rows, relations }, { progressCallback }) {
     this.initProgress();
-
     this.totalRows = Object.keys(rows).length;
-
     this.progressCallback = progressCallback;
-
     this.emitProgress();
 
+    // Initialize sql.js with WebAssembly
     const SQL = await initSqlJs({
-        locateFile: file => wasmUrl
-      });
-
+      locateFile: (file) => 'https://unpkg.com/sql.js@latest/dist/' + file,
+    });
     const db = new SQL.Database();
 
-    db.exec('PRAGMA foreign_keys = OFF;');
-    db.exec(`DROP TABLE IF EXISTS Entities;`);
-    db.exec(`DROP TABLE IF EXISTS Hierarchy;`);
-    db.exec('PRAGMA foreign_keys = ON;');
+    // Reset tables
+    db.exec("PRAGMA foreign_keys = OFF;");
+    db.exec("DROP TABLE IF EXISTS Entities;");
+    db.exec("DROP TABLE IF EXISTS Hierarchy;");
+    db.exec("PRAGMA foreign_keys = ON;");
 
     const columnNames = Object.keys(columns);
-
     const keys = {
-      ExpressID: 'PRIMARY KEY',
-      GlobalId: 'UNIQUE',
+      ExpressID: "PRIMARY KEY",
+      GlobalId: "UNIQUE",
     };
 
+    // Build SQL column definitions
     const columnSQLs = [];
-
     for (const columnName in columns) {
       const columnType = columns[columnName];
-      let typeName = 'TEXT';
-      let columnKey = keys[columnName] ?? '';
+      let typeName = "TEXT";
+      let columnKey = keys[columnName] ?? "";
 
       if (columnType === 1) {
-        typeName = 'INTEGER';
+        typeName = "INTEGER";
       } else if (columnType === 2) {
-        typeName = 'INTEGER';
+        typeName = "INTEGER";
       } else if (columnType === 3) {
-        typeName = 'REAEL';
+        typeName = "REAL";
       }
       columnSQLs.push(`"${columnName}" ${typeName} ${columnKey}`);
     }
     const columnsSQL = columnSQLs.join(",\n");
 
+    // Create Entities table
     db.exec(`
       CREATE TABLE Entities (
         ${columnsSQL}
       );
     `);
 
+    // Create Hierarchy table
     db.exec(`
       CREATE TABLE Hierarchy (
         ParentID INTEGER,
@@ -96,45 +97,41 @@ export default class SqliteWriter extends BaseWriter {
       );
     `);
 
+    // Prepare entity insert statement
     const insertStmt = db.prepare(
-      `INSERT INTO Entities (${Array.from(columnNames)
-        .map((c) => `"${c}"`)
-        .join(',')}) VALUES (${Array.from(columnNames)
-        .map(() => '?')
-        .join(',')});`
+      `INSERT INTO Entities (${columnNames.map((c) => `"${c}"`).join(",")})
+       VALUES (${columnNames.map(() => "?").join(",")});`
     );
 
+    // Insert entity rows
     for (const row of Object.values(rows)) {
       this.processedRows++;
-
       this.emitProgress();
 
-      const values = Array.from(columnNames).map((c) => row[c] ?? null);
-      
+      const values = columnNames.map((c) => row[c] ?? null);
       insertStmt.run(values);
     }
     insertStmt.free();
 
+    // Insert relations
     this.totalRelations = relations.length;
-
     this.step++;
-
     for (const relation of relations) {
       this.processedRelations++;
-
       this.emitProgress();
-
       try {
         db.run(
           `INSERT INTO Hierarchy (ParentID, ChildID, Depth) VALUES (?, ?, ?);`,
           [relation.ancestor, relation.descendant, relation.depth]
         );
-      } catch (e) {}
+      } catch (e) {
+        // Skip duplicate/invalid relation errors
+      }
     }
+
+    // Export database to Uint8Array
     const data = db.export();
-
     db.close();
-
     return data;
   }
 
@@ -159,11 +156,13 @@ export default class SqliteWriter extends BaseWriter {
    * @private
    */
   emitProgress() {
-    if (!this.progressCallback) {
-      return;
-    }
-    const totalRows = this.processedRows / (this.totalRows || 1) * 0.5;
-    const totalRelations = this.step >= 2 ? this.processedRelations / (this.totalRelations || 1) * 0.5 : 0;
+    if (!this.progressCallback) return;
+
+    const totalRows = (this.processedRows / (this.totalRows || 1)) * 0.5;
+    const totalRelations =
+      this.step >= 2
+        ? (this.processedRelations / (this.totalRelations || 1)) * 0.5
+        : 0;
 
     this.progressCallback(totalRows + totalRelations);
   }

@@ -1,11 +1,11 @@
-export default class IfcReaderAsyncBrowser {
-  static formats = ["ifc"];
+export default class FragWriterAsyncBrowser {
+  static formats = ["frag"];
   static environments = ["browser"];
   static priority = 10;
-  static outputs = ["tabular", "ifc"];
+  static inputs = ["ifc"];
 
   constructor() {
-    this.worker = new Worker(new URL('./ifc-reader-worker.js', import.meta.url), {
+    this.worker = new Worker(new URL('./frag-writer-worker.js', import.meta.url), {
       type: 'module'
     });
 
@@ -29,10 +29,7 @@ export default class IfcReaderAsyncBrowser {
     };
   }
 
-  read(input, { type, progressCallback } = {}) {
-    if (type == "ifc") {
-      return input;
-    }
+  write(input, { progressCallback } = {}) {
     progressCallback ||= () => {};
 
     return new Promise(async (resolve, reject) => {
@@ -41,7 +38,7 @@ export default class IfcReaderAsyncBrowser {
 
         this.pending.set(id, { resolve, reject, progressCallback });
 
-        this.worker.postMessage({ id, buffer: input.buffer }, [input.buffer]);
+        this.worker.postMessage({ id, input });
       } catch(err) {
         reject(err);
       }

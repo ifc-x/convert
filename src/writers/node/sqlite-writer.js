@@ -1,9 +1,9 @@
 import { BaseWriter } from "../../adapters/base-writer.js";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+import fs from "fs";
+import os from "os";
+import path from "path";
 
 /**
  * SQLite writer for persisting IFC/FRAG data into a relational database file.
@@ -24,6 +24,9 @@ export default class SqliteWriter extends BaseWriter {
   /** @type {number} Priority when multiple writers are registered */
   static priority = 10;
 
+  /** @type {string[]} Supported input types */
+  static inputs = ["tabular"];
+
   /**
    * Write parsed data into a SQLite database file.
    *
@@ -41,41 +44,39 @@ export default class SqliteWriter extends BaseWriter {
     this.initProgress();
 
     this.totalRows = Object.keys(rows).length;
-
     this.progressCallback = progressCallback;
-
     this.emitProgress();
 
     const db = await open({
-      filename: ':memory:',
+      filename: ":memory:",
       driver: sqlite3.Database,
     });
 
-    await db.exec('PRAGMA foreign_keys = OFF;');
-    await db.exec(`DROP TABLE IF EXISTS Entities;`);
-    await db.exec(`DROP TABLE IF EXISTS Hierarchy;`);
-    await db.exec('PRAGMA foreign_keys = ON;');
+    await db.exec("PRAGMA foreign_keys = OFF;");
+    await db.exec("DROP TABLE IF EXISTS Entities;");
+    await db.exec("DROP TABLE IF EXISTS Hierarchy;");
+    await db.exec("PRAGMA foreign_keys = ON;");
 
     const columnNames = Object.keys(columns);
 
     const keys = {
-      ExpressID: 'PRIMARY KEY',
-      GlobalId: 'UNIQUE',
+      ExpressID: "PRIMARY KEY",
+      GlobalId: "UNIQUE",
     };
 
+    // Build SQL column definitions
     const columnSQLs = [];
-
     for (const columnName in columns) {
       const columnType = columns[columnName];
-      let typeName = 'TEXT';
-      let columnKey = keys[columnName] ?? '';
+      let typeName = "TEXT";
+      let columnKey = keys[columnName] ?? "";
 
       if (columnType === 1) {
-        typeName = 'INTEGER';
+        typeName = "INTEGER";
       } else if (columnType === 2) {
-        typeName = 'INTEGER';
+        typeName = "INTEGER";
       } else if (columnType === 3) {
-        typeName = 'REAEL';
+        typeName = "REAL";
       }
       columnSQLs.push(`"${columnName}" ${typeName} ${columnKey}`);
     }
@@ -98,32 +99,25 @@ export default class SqliteWriter extends BaseWriter {
     `);
 
     const insertStmt = await db.prepare(
-      `INSERT INTO Entities (${Array.from(columnNames)
-        .map((c) => `"${c}"`)
-        .join(',')}) VALUES (${Array.from(columnNames)
-        .map(() => '?')
-        .join(',')});`
+      `INSERT INTO Entities (${columnNames.map((c) => `"${c}"`).join(",")})
+       VALUES (${columnNames.map(() => "?").join(",")});`
     );
 
     for (const row of Object.values(rows)) {
       this.processedRows++;
-
       this.emitProgress();
 
-      const values = Array.from(columnNames).map((c) => row[c] ?? null);
+      const values = columnNames.map((c) => row[c] ?? null);
       await insertStmt.run(...values);
     }
     await insertStmt.finalize();
 
+    // Insert relations
     this.totalRelations = relations.length;
-
     this.step++;
-
     for (const relation of relations) {
       this.processedRelations++;
-
       this.emitProgress();
-
       try {
         await db.run(
           `INSERT INTO Hierarchy (ParentID, ChildID, Depth) VALUES (?, ?, ?);`,
@@ -131,20 +125,20 @@ export default class SqliteWriter extends BaseWriter {
           relation.descendant,
           relation.depth
         );
-      } catch (e) {}
+      } catch (e) {
+        // skip duplicate/invalid relation errors
+      }
     }
 
     const tempFilePath = path.join(os.tmpdir(), `tempdb-${Date.now()}.sqlite`);
-
     await new Promise((resolve, reject) => {
       const backup = db.getDatabaseInstance().backup(tempFilePath);
-
-      backup.step(-1, function(err) {
+      backup.step(-1, function (err) {
         if (err) {
           reject(err);
           return;
         }
-        backup.finish(function(err) {
+        backup.finish(function (err) {
           if (err) {
             reject(err);
             return;
@@ -182,11 +176,13 @@ export default class SqliteWriter extends BaseWriter {
    * @private
    */
   emitProgress() {
-    if (!this.progressCallback) {
-      return;
-    }
-    const totalRows = this.processedRows / (this.totalRows || 1) * 0.5;
-    const totalRelations = this.step >= 2 ? this.processedRelations / (this.totalRelations || 1) * 0.5 : 0;
+    if (!this.progressCallback) return;
+
+    const totalRows = (this.processedRows / (this.totalRows || 1)) * 0.5;
+    const totalRelations =
+      this.step >= 2
+        ? (this.processedRelations / (this.totalRelations || 1)) * 0.5
+        : 0;
 
     this.progressCallback(totalRows + totalRelations);
   }

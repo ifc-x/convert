@@ -1,13 +1,19 @@
-import * as WebIfc from 'web-ifc';
+import { SingleThreadedFragmentsModel } from "@thatopen/fragments";
 import { BaseReader } from "../../adapters/base-reader.js";
 import { globalIdToGuid } from "../../utilities/guid.js";
 
-export default class IfcReaderNode extends BaseReader {
-  static formats = ["ifc"];
-  static environments = ["node"];
+class ExtendedSingleThreadedFragmentsModel extends SingleThreadedFragmentsModel {
+  getVirtualModel() {
+    return this._virtualModel;
+  }
+}
+
+export default class FragReaderBrowser extends BaseReader {
+  static formats = ["frag"];
+  static environments = ["browser"];
   static priority = 10;
-  static outputs = ["tabular", "ifc"];
-  
+  static outputs = ["tabular"];
+
   entityTypes = [
     // Spatial Elements
     "IFCPROJECT",
@@ -84,36 +90,26 @@ export default class IfcReaderNode extends BaseReader {
 
   constructor() {
     super();
-    
-    this.ifcAPI = new WebIfc.IfcAPI();
-
-    this.modelID = null;
   }
 
-  async read(input, { type, progressCallback }) {
-    if (type == "ifc") {
-      return input;
-    }
+  async read(input, { progressCallback }) {
     this.initProgress();
 
     this.progressCallback = progressCallback;
 
     this.emitProgress();
 
-    await this.ifcAPI.Init();
-    
-    this.ifcAPI.SetLogLevel(WebIfc.LogLevel.LOG_LEVEL_OFF);
+    this.model = new ExtendedSingleThreadedFragmentsModel(
+      "model",
+      input
+    );
 
-    this.modelID = this.ifcAPI.OpenModel(input);
-
-    if (this.modelID < 0) {
-      throw new Error('Failed to open IFC model');
-    }
     const relations = this.buildRelationsClosure(this.getRelations());
+    
+    this.definesByProperties = this.getRelDefinesByProperties();
 
     this.updateTotalEntities();
 
-    const ids = this.ifcAPI.GetLineIDsWithType(this.modelID, WebIfc.IFCRELDEFINESBYPROPERTIES);
     const columns = {
       ExpressID: 2,
       Type: 4,
@@ -125,23 +121,22 @@ export default class IfcReaderNode extends BaseReader {
     };
 
     const propertySets = {};
+    const relationTypes = {};
 
-    for (let i = 0; i < ids.size(); i++) {
+    for (const line of this.model.getItemsData(this.definesByProperties)) {
       this.processedEntities++;
 
       this.emitProgress();
 
-      const expressID = ids.get(i);
-
-      const line = this.ifcAPI.GetLine(this.modelID, expressID, true, true);
-
-      if (!line) {
-        continue;
-      }
       const properties = {};
+      const relations = this.model.getVirtualModel().getItemRelations(line._localId.value);
 
-      (line.RelatingPropertyDefinition?.HasProperties || []).forEach((prop) => {
-        const propName = line.RelatingPropertyDefinition.Name?.value + '_' + prop.Name?.value;
+      for (const relationType of Object.keys(relations)) {
+        relationTypes[relationType] = true;
+      }
+      (relations?.HasProperties ? this.model.getItemsData(relations?.HasProperties) : [])
+      .forEach((prop) => {
+        const propName = line.Name?.value + '_' + prop.Name?.value;
         const propValue = prop.NominalValue?.value ?? null;
         let columnType = columns[propName] ?? 0;
 
@@ -163,23 +158,24 @@ export default class IfcReaderNode extends BaseReader {
         }
       });
 
-      (line.RelatingPropertyDefinition?.Quantities || []).forEach((quantity) => {
-        const quantityName = line.RelatingPropertyDefinition.Name?.value + '_' + quantity.Name?.value;
+      (relations?.Quantities ? this.model.getItemsData(relations?.Quantities) : [])
+      .forEach((quantity) => {
+        const quantityName = line.Name?.value + '_' + quantity.Name?.value;
         let columnType = columns[quantityName] ?? 0;
         let quantityValue = 0;
 
-        if (quantity.type === WebIfc.IFCQUANTITYLENGTH) {
-          quantityValue = quantity.LengthValue?._representationValue ?? 0;
-        } else if (quantity.type === WebIfc.IFCQUANTITYAREA) {
-          quantityValue = quantity.AreaValue?._representationValue ?? 0;
-        } else if (quantity.type === WebIfc.IFCQUANTITYVOLUME) {
-          quantityValue = quantity.VolumeValue?._representationValue ?? 0;
-        } else if (quantity.type === WebIfc.IFCQUANTITYWEIGHT) {
-          quantityValue = quantity.WeightValue?._representationValue ?? 0;
-        } else if (quantity.type === WebIfc.IFCQUANTITYCOUNT) {
-          quantityValue = quantity.CountValue?._representationValue ?? 0;
-        } else if (quantity.type === WebIfc.IFCQUANTITYTIME) {
-          quantityValue = quantity.TimeValue?._representationValue ?? 0;
+        if (quantity._category.value === "IFCQUANTITYLENGTH") {
+          quantityValue = quantity.LengthValue?.value ?? 0;
+        } else if (quantity._category.value === "IFCQUANTITYAREA") {
+          quantityValue = quantity.AreaValue?.value ?? 0;
+        } else if (quantity._category.value === "IFCQUANTITYVOLUME") {
+          quantityValue = quantity.VolumeValue?.value ?? 0;
+        } else if (quantity._category.value === "IFCQUANTITYWEIGHT") {
+          quantityValue = quantity.WeightValue?.value ?? 0;
+        } else if (quantity._category.value === "IFCQUANTITYCOUNT") {
+          quantityValue = quantity.CountValue?.value ?? 0;
+        } else if (quantity._category.value === "IFCQUANTITYTIME") {
+          quantityValue = quantity.TimeValue?.value ?? 0;
         }
         properties[quantityName] = quantityValue;
 
@@ -199,7 +195,7 @@ export default class IfcReaderNode extends BaseReader {
         }
       });
 
-      propertySets[expressID] = properties;
+      propertySets[line._localId.value] = properties;
     }
     const rows = {};
     const columnNames = Object.keys(columns);
@@ -208,33 +204,30 @@ export default class IfcReaderNode extends BaseReader {
       return acc;
     }, {});
 
-    for (const entityTypeName of this.entityTypes) {
-      const ids = this.ifcAPI.GetLineIDsWithType(this.modelID, WebIfc[entityTypeName]);
+    const items = this.model.getItemsOfCategories(
+      this.entityTypes.map((type) => new RegExp('^' + type + '$'))
+    );
 
-      for (let i = 0; i < ids.size(); i++) {
+    for (const ids of Object.values(items)) {
+      for (const line of this.model.getItemsData(ids)) {
         this.processedEntities++;
 
         this.emitProgress();
 
-        const expressID = ids.get(i);
+        const relations = this.model.getVirtualModel().getItemRelations(line._localId.value);
 
-        const line = this.ifcAPI.GetLine(this.modelID, expressID, false, true, 'IsDefinedBy');
-
-        if (!line) {
-          continue;
-        }
         const row = Object.assign({}, defaults, {
-          ExpressID: expressID,
-          Type: entityTypeName,
-          GlobalId: line.GlobalId.value,
-          GUID: globalIdToGuid(line.GlobalId.value),
+          ExpressID: line._localId.value,
+          Type: line._category.value,
+          GlobalId: line._guid.value,
+          GUID: globalIdToGuid(line._guid.value),
           Name: line.Name?.value,
           Description: line.Description?.value ?? null,
           Tag: line.Tag?.value ?? null,
         });
 
-        for (const definedBy of (line.IsDefinedBy ?? [])) {
-          Object.assign(row, propertySets[definedBy.value] ?? {});
+        for (const definedBy of (relations?.IsDefinedBy ?? [])) {
+          Object.assign(row, propertySets[definedBy] ?? {});
         }
         for (const propKey in row) {
           const columnType = columns[propKey];
@@ -249,58 +242,72 @@ export default class IfcReaderNode extends BaseReader {
             row[propKey] = row[propKey] ?? null;
           }
         }
-        rows[expressID] = row;
+        rows[line._localId.value] = row;
       }
     }
-    this.close();
-
     return { columns, rows, relations };
+  }
+
+  getRelDefinesByProperties() {
+    const items = this.model.getItemsOfCategories(
+      this.model.getCategories().map((type) => new RegExp('^' + type + '$'))
+    );
+
+    const definedBys = {};
+
+    for (const ids of Object.values(items)) {
+      for (const id of ids) {
+        const relations = this.model.getVirtualModel().getItemRelations(id);
+
+        if (!relations?.IsDefinedBy) {
+          continue;
+        }
+        for (const definedBy of relations.IsDefinedBy) {
+          definedBys[definedBy] = definedBy;
+        }
+      }
+    }
+    return Object.values(definedBys);
   }
   
   updateTotalEntities() {
-    this.totalEntities = 0;
+    const items = this.model.getItemsOfCategories(
+      this.entityTypes.map((type) => new RegExp('^' + type + '$'))
+    );
 
-    const entityTypes = this.entityTypes.slice(0);
-    entityTypes.push('IFCRELDEFINESBYPROPERTIES');
-
-    for (const entityTypeName of entityTypes) {
-      const ids = this.ifcAPI.GetLineIDsWithType(this.modelID, WebIfc[entityTypeName]);
-      
-      this.totalEntities += ids.size();
-    }
+    this.totalEntities = Object.values(items).reduce(
+      (count, item) => count + item.length, this.definesByProperties.length
+    );
   }
 
   getRelations() {
     const relations = {};
-    const aggregates = this.ifcAPI.GetLineIDsWithType(this.modelID, WebIfc.IFCRELAGGREGATES);
 
-    for (let i = 0; i < aggregates.size(); i++) {
-      const relID = aggregates.get(i);
-      const rel = this.ifcAPI.GetLine(this.modelID, relID);
+    function traverse(current) {
+      if (!current || !current.children) return;
 
-      const parentID = rel.RelatingObject.value;
+      if (current.localId !== null) {
+        const childIds = [];
 
-      relations[parentID] ??= [];
-
-      for (const obj of rel.RelatedObjects) {
-        relations[parentID].push(obj.value);
+        for (const child of current.children) {
+          if (child.children) {
+            for (const grandChild of child.children) {
+              if (grandChild.localId !== null) {
+                childIds.push(grandChild.localId);
+              }
+              traverse(grandChild);
+            }
+          }
+        }
+        relations[current.localId] = childIds;
+      } else {
+        for (const child of current.children) {
+          traverse(child);
+        }
       }
     }
-    const contained = this.ifcAPI.GetLineIDsWithType(this.modelID, WebIfc.IFCRELCONTAINEDINSPATIALSTRUCTURE);
+    traverse(this.model.getSpatialStructure());
 
-    for (let i = 0; i < contained.size(); i++) {
-      const relID = contained.get(i);
-
-      const rel = this.ifcAPI.GetLine(this.modelID, relID);
-
-      const parentID = rel.RelatingStructure.value;
-
-      relations[parentID] ??= [];
-
-      for (const obj of rel.RelatedElements) {
-        relations[parentID].push(obj.value);
-      }
-    }
     return relations;
   }
 
@@ -330,15 +337,6 @@ export default class IfcReaderNode extends BaseReader {
 
   emitProgress() {
     this.progressCallback(this.processedEntities / (this.totalEntities || 1));
-  }
-
-  close() {
-    if (this.modelID === null) {
-        return;
-    }
-    this.ifcAPI.CloseModel(this.modelID);
-
-    this.modelID = null;
   }
 
   isInteger(value) {

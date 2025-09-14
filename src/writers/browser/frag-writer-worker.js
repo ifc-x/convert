@@ -1,12 +1,12 @@
-import IfcReaderBrowser from './ifc-reader';
+import FragWriterBrowser from './frag-writer';
 
 self.onmessage = async (event) => {
-  const { id, buffer } = event.data;
+  const { id, input } = event.data;
 
   try {
-    const reader = new IfcReaderBrowser();
+    const writer = new FragWriterBrowser();
 
-    const result = await reader.read(new Uint8Array(buffer), {
+    const result = await writer.write(input, {
       progressCallback: (progress) => {
         self.postMessage({ id, progress });
       }

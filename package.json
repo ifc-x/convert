@@ -15,6 +15,7 @@
   "author": "Lauri Tunnela <lauri@tunne.la>",
   "license": "MIT",
   "dependencies": {
+    "@thatopen/fragments": "^3.1.7",
     "sql.js": "^1.13.0",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7",

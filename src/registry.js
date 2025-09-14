@@ -78,7 +78,45 @@ class Registry {
     const matches = this.writers
       .filter(w => w.environments.includes(env) && w.formats.includes(format))
       .sort((a, b) => b.priority - a.priority);
+
     return matches[0];
+  }
+
+  /**
+   * Find the most compatible reader/writer pair for a given conversion.
+   *
+   * The method looks up all registered readers that support the given input
+   * format and environment, and all writers that support the given output
+   * format and environment. It then tries to match them by checking if the
+   * reader can produce a data type that the writer can consume. The highest-
+   * priority matching pair is returned.
+   *
+   * @param {"node"|"browser"} env - Target environment in which conversion runs.
+   * @param {string} inputFormat - Input format (e.g., `"ifc"`, `"frag"`).
+   * @param {string} outputFormat - Output format (e.g., `"sqlite"`, `"xlsx"`).
+   * @returns {{
+   *   ReaderClass: Function,
+   *   WriterClass: Function,
+   *   dataType: string
+   * } | null} Matching pair with the agreed `dataType`, or `null` if none found.
+   */
+  findCompatiblePair(env, inputFormat, outputFormat = "sqlite") {
+    const readers = this.readers
+      .filter(r => r.environments.includes(env) && r.formats.includes(inputFormat));
+
+    const writers = this.writers
+      .filter(w => w.environments.includes(env) && w.formats.includes(outputFormat));
+
+    for (const ReaderClass of readers.sort((a, b) => b.priority - a.priority)) {
+      for (const WriterClass of writers.sort((a, b) => b.priority - a.priority)) {
+        const type = (ReaderClass.outputs || []).find(t => (WriterClass.inputs || []).includes(t));
+
+        if (type) {
+          return { ReaderClass, WriterClass, dataType: type };
+        }
+      }
+    }
+    return null;
   }
 }
 

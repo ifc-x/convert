@@ -2,30 +2,28 @@
 import fs from "fs";
 import { convert } from "../src/index.js";
 
-async function run() {
-  const args = process.argv.slice(2);
+const args = process.argv.slice(2);
 
-  if (args.length <= 1) {
-    console.log("Usage: ifc-x-convert <input.ifc> <output.db>");
-    
-    return;
-  }
-  const inputFile = args[0];
-  const outputFile = args[1];
-
-  try {
-    const data = new Uint8Array(fs.readFileSync(inputFile));
-
-    const result = await convert(data, {
-      inputType: "ifc",
-      outputType: "sqlite",
-      progressCallback: (progress) => console.log(progress),
-    });
-
-    fs.writeFileSync(outputFile, Buffer.from(result));
-  } catch (err) {
-    console.error(`Error: ${err}`);
-  }
+if (args.length <= 1) {
+  console.log("Usage: ifc-x-convert <input.ifc> <output.db>");
+  
+  process.exit(1);
 }
+const inputFile = args[0];
+const inputType = inputFile.split('.').pop();
+const outputFile = args[1];
+const outputType = outputFile.split('.').pop();
 
-run();
+try {
+  const data = new Uint8Array(fs.readFileSync(inputFile));
+
+  const result = await convert(data, {
+    inputType,
+    outputType,
+    progressCallback: (progress) => console.log(progress),
+  });
+
+  fs.writeFileSync(outputFile, Buffer.from(result));
+} catch (err) {
+  console.error(`Error: ${err}`);
+}

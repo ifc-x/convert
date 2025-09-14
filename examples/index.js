@@ -1,6 +1,7 @@
 import { convert } from '../src/index.js';
 
 const fileInput = document.getElementById('fileInput');
+const outputTypeSelect = document.getElementById('outputType');
 const convertBtn = document.getElementById('convertBtn');
 const progressInner = document.getElementById('progressInner');
 const percentText = document.getElementById('percentText');
@@ -9,21 +10,39 @@ const downloadAnchor = document.getElementById('downloadAnchor');
 
 let currentFile = null;
 let currentUrl = null;
+let detectedInputType = null;
 
 fileInput.addEventListener('change', (e) => {
   const f = e.target.files && e.target.files[0];
   currentFile = f || null;
   convertBtn.disabled = !currentFile;
   resetUI();
+
   if (currentFile) {
-    statusText.textContent = `Selected: ${currentFile.name}`;
+    // detect input type from extension
+    const ext = currentFile.name.split('.').pop().toLowerCase();
+    if (ext === 'ifc') {
+      detectedInputType = 'ifc';
+    } else if (ext === 'frag') {
+      detectedInputType = 'frag';
+    } else {
+      detectedInputType = null;
+    }
+
+    statusText.textContent = detectedInputType
+      ? `Selected: ${currentFile.name} (detected ${detectedInputType.toUpperCase()})`
+      : `Selected: ${currentFile.name} (unknown type)`;
   }
 });
 
 convertBtn.addEventListener('click', async () => {
   if (!currentFile) return;
+
+  const outputType = outputTypeSelect.value;
+
   convertBtn.disabled = true;
   fileInput.disabled = true;
+  outputTypeSelect.disabled = true;
   downloadAnchor.style.display = 'none';
   setProgress(0, 'Starting...');
 
@@ -33,19 +52,30 @@ convertBtn.addEventListener('click', async () => {
       setProgress(progress, 'Processing');
     };
 
-    // Call the user's convert function. It should pick a browser reader & writer automatically.
-    const result = await convert(currentFile, { progressCallback });
+    // Call the user's convert function with detected input type
+    const result = await convert(currentFile, {
+      progressCallback,
+      inputType: detectedInputType,
+      outputType,
+    });
 
     // Normalize result into a Blob
-    const blob = new Blob([result.buffer ? result.buffer : result], { type: 'application/octet-stream' });
+    const blob = new Blob([result.buffer ? result.buffer : result], {
+      type: 'application/octet-stream',
+    });
 
     // Create download link
     if (currentUrl) {
       URL.revokeObjectURL(currentUrl);
       currentUrl = null;
     }
-    const extension = '.db';
-    const filename = (currentFile && currentFile.name ? stripExtension(currentFile.name) : 'converted') + extension;
+
+    const extension = outputType === 'sqlite' ? '.db' : '.frag';
+    const filename =
+      (currentFile && currentFile.name
+        ? stripExtension(currentFile.name)
+        : 'converted') + extension;
+
     currentUrl = URL.createObjectURL(blob);
     downloadAnchor.href = currentUrl;
     downloadAnchor.download = filename;
@@ -57,11 +87,13 @@ convertBtn.addEventListener('click', async () => {
   } catch (err) {
     console.error(err);
     setProgress(0, 'Error');
-    statusText.textContent = 'Error: ' + (err && err.message ? err.message : String(err));
+    statusText.textContent =
+      'Error: ' + (err && err.message ? err.message : String(err));
     alert('Conversion failed. See console for details.');
   } finally {
     convertBtn.disabled = false;
     fileInput.disabled = false;
+    outputTypeSelect.disabled = false;
   }
 });
 

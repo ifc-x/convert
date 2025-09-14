@@ -1,12 +1,12 @@
 import * as WebIfc from 'web-ifc';
 import { BaseReader } from "../../adapters/base-reader.js";
-import wasmUrl from 'web-ifc/web-ifc.wasm?url';
 import { globalIdToGuid } from "../../utilities/guid.js";
 
 export default class IfcReaderBrowser extends BaseReader {
   static formats = ["ifc"];
   static environments = ["browser"];
   static priority = 10;
+  static outputs = ["tabular", "ifc"];
 
   entityTypes = [
     // Spatial Elements
@@ -90,20 +90,20 @@ export default class IfcReaderBrowser extends BaseReader {
     this.modelID = null;
   }
 
-  async read(input, { progressCallback }) {
+  async read(input, { type, progressCallback }) {
+    if (type == "ifc") {
+      return input;
+    }
     this.initProgress();
 
     this.progressCallback = progressCallback;
 
     this.emitProgress();
-
-    await this.ifcAPI.Init((fileName) => {
-      if (fileName === 'web-ifc.wasm') {
-        return wasmUrl;
-      }
-      return fileName;
-    });
     
+    this.ifcAPI.SetWasmPath('https://unpkg.com/web-ifc@latest/', true);
+
+    await this.ifcAPI.Init();
+
     this.ifcAPI.SetLogLevel(WebIfc.LogLevel.LOG_LEVEL_OFF);
 
     this.modelID = this.ifcAPI.OpenModel(input);

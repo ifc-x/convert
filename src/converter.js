@@ -13,7 +13,7 @@ export default class Converter {
    * @param {Function} [options.writerClass] - Forced writer class to use instead of auto-detection.
    */
   constructor({ env, readerClass, writerClass } = {}) {
-    this.env = env || (typeof window === "undefined" ? "node" : "browser");
+    this.env = env || (typeof process !== 'undefined' && process?.versions?.node ? "node" : "browser");
     this.forcedReader = readerClass;
     this.forcedWriter = writerClass;
     this.middleware = [];
@@ -142,41 +142,30 @@ export default class Converter {
     const detectedInputType = inputType || this.detectType(input);
     const detectedOutputType = outputType;
 
-    let reader = this.getReader(detectedInputType);
-    let writer = this.getWriter(detectedOutputType);
-    let progress = null;
-    
-    const emitProgress = (newProgress) => {
-      if (!progressCallback) {
-        return;
-      }
-      var prevProgress = progress;
+    this.progressCallback = progressCallback;
 
-      progress = Math.round(newProgress * 100);
+    const pair = registry.findCompatiblePair(this.env, detectedInputType, detectedOutputType);
 
-      if (prevProgress === progress) {
-        return;
-      }
-      progressCallback(progress);
-    };
+    if (!pair) {
+      throw new Error(`No compatible reader/writer for ${detectedInputType} → ${detectedOutputType}`);
+    }
+    const { ReaderClass, WriterClass, dataType } = pair;
+
+    const reader = new ReaderClass();
+    const writer = new WriterClass();
 
     let data = await reader.read(
       await this.toUint8Array(input), 
-      { 
-        type: detectedInputType, 
-        progressCallback: (progress) => emitProgress(progress * 0.5)
-      }
+      { type: dataType, progressCallback: (p) => this.emitProgress(p * 0.5) }
     );
 
     for (const fn of this.middleware) {
       data = await fn(data);
     }
+
     return writer.write(
       data, 
-      { 
-        type: detectedOutputType, 
-        progressCallback: (progress) => emitProgress(0.5 + progress * 0.5) 
-      }
+      { type: dataType, progressCallback: (p) => this.emitProgress(0.5 + p * 0.5) }
     );
   }
 }
