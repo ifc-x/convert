@@ -1,7 +1,7 @@
 {
   "name": "@ifc-x/convert",
   "version": "0.0.1",
-  "description": "Convert IFC/FRAG files to FRAG/SQLite in Node.js, browser and cli.",
+  "description": "Convert IFC/FRAG files to FRAG/SQLite in Node.js, browser and CLI.",
   "author": "Lauri Tunnela <lauri@tunne.la>",
   "license": "MIT",
   "type": "module",
@@ -35,7 +35,7 @@
     "conversion",
     "Node.js",
     "browser",
-    "cli",
+    "CLI",
     "BIM",
     "library"
   ],
