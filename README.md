@@ -1,7 +1,7 @@
 # @ifc-x/convert
 
-A JavaScript library and CLI tool for converting **IFC** (and later, **web-ifc FRAG**) files into formats like **SQLite** and (SOON) **Excel**.
-Supports both **Node.js** and **browser** environments with automatic reader/writer registration.
+A JavaScript library and CLI tool for converting **IFC**/**FRAG** files into formats like **SQLite**/**FRAG** and (SOON) **Excel**.
+Supports both **Node.js** and **browser** environments.
 
 ---
 
