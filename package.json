@@ -1,19 +1,44 @@
 {
   "name": "@ifc-x/convert",
   "version": "0.0.1",
-  "description": "",
+  "description": "Convert IFC/FRAG files to FRAG/SQLite in Node.js, browser and cli.",
+  "author": "Lauri Tunnela <lauri@tunne.la>",
+  "license": "MIT",
   "type": "module",
-  "main": "src/index.js",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./assets/*": "./dist/assets/*"
+  },
+  "unpkg": "./dist/index.umd.js",
+  "jsdelivr": "./dist/index.umd.js",
+  "files": [
+    "dist"
+  ],
   "bin": {
     "ifc-x-convert": "bin/cli.js"
   },
   "scripts": {
+    "build": "vite build",
     "examples": "vite --config vite.config.examples.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "Lauri Tunnela <lauri@tunne.la>",
-  "license": "MIT",
+  "keywords": [
+    "IFC",
+    "FRAG",
+    "SQLite",
+    "converter",
+    "conversion",
+    "Node.js",
+    "browser",
+    "cli",
+    "BIM",
+    "library"
+  ],
   "dependencies": {
     "@thatopen/fragments": "^3.1.7",
     "sql.js": "^1.13.0",

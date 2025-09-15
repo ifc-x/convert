@@ -1,26 +1,35 @@
 import Converter from "./converter.js";
 import { registry } from "./registry.js";
 
-if (typeof process !== 'undefined' && process?.versions?.node) {
-  const IfcReaderNode = await import("./readers/node/ifc-reader.js");
-  const FragReaderNode = await import("./readers/node/frag-reader.js");
-  const FragWriterNode = await import("./writers/node/frag-writer.js");
-  const SqliteWriterNode = await import("./writers/node/sqlite-writer.js");
+let registerPromise;
 
-  registry.addReader(IfcReaderNode.default);
-  registry.addReader(FragReaderNode.default);
-  registry.addWriter(FragWriterNode.default);
-  registry.addWriter(SqliteWriterNode.default);
-} else {
-  const IfcReaderBrowser = await import("./readers/browser/ifc-reader-async.js");
-  const FragReaderBrowser = await import("./readers/browser/frag-reader-async.js");
-  const FragWriterBrowser = await import("./writers/browser/frag-writer-async.js");
-  const SqliteWriterBrowser = await import("./writers/browser/sqlite-writer-async.js");
+async function register() {
+  if (registerPromise) {
+    return registerPromise;
+  }
+  return registerPromise = (async () => {
+    if (typeof process !== 'undefined' && process?.versions?.node) {
+      const IfcReaderNode = await import("./readers/node/ifc-reader.js");
+      const FragReaderNode = await import("./readers/node/frag-reader.js");
+      const FragWriterNode = await import("./writers/node/frag-writer.js");
+      const SqliteWriterNode = await import("./writers/node/sqlite-writer.js");
 
-  registry.addReader(IfcReaderBrowser.default);
-  registry.addReader(FragReaderBrowser.default);
-  registry.addWriter(FragWriterBrowser.default);
-  registry.addWriter(SqliteWriterBrowser.default);
+      registry.addReader(IfcReaderNode.default);
+      registry.addReader(FragReaderNode.default);
+      registry.addWriter(FragWriterNode.default);
+      registry.addWriter(SqliteWriterNode.default);
+    } else {
+      const IfcReaderBrowser = await import("./readers/browser/ifc-reader-async.js");
+      const FragReaderBrowser = await import("./readers/browser/frag-reader-async.js");
+      const FragWriterBrowser = await import("./writers/browser/frag-writer-async.js");
+      const SqliteWriterBrowser = await import("./writers/browser/sqlite-writer-async.js");
+
+      registry.addReader(IfcReaderBrowser.default);
+      registry.addReader(FragReaderBrowser.default);
+      registry.addWriter(FragWriterBrowser.default);
+      registry.addWriter(SqliteWriterBrowser.default);
+    }
+  })();
 }
 
 /**
@@ -38,6 +47,8 @@ if (typeof process !== 'undefined' && process?.versions?.node) {
  */
 export async function convert(input, options = {}) {
   const { middleware = [], readerClass, writerClass, env, inputType, outputType, progressCallback } = options;
+
+  await register();
 
   const converter = new Converter({ env, readerClass, writerClass });
 
