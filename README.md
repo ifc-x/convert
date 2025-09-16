@@ -184,4 +184,4 @@ registry.addWriter(CustomWriter);
 
 ## License
 
-MIT © [Lauri Tunnela](mailto:lauri@tunne.la)
+MIT © [Lauri Tunnela](https://github.com/tunnela)
