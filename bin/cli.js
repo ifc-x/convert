@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import fs from "fs";
-import { convert } from "../src/index.js";
+import { convert } from "../dist/index.node.js";
 
 const args = process.argv.slice(2);
 
