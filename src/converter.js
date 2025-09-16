@@ -1,5 +1,4 @@
 import { registry } from "./registry.js";
-import path from "path";
 
 /**
  * Class for converting IFC files to various formats like SQLite or Excel.
@@ -37,7 +36,7 @@ export default class Converter {
    */
   detectType(input) {
     if (typeof input === "string" && input.includes(".")) {
-      return path.extname(input).slice(1).toLowerCase();
+      return input.split(".").pop().toLowerCase();
     }
     if (typeof File !== "undefined" && input instanceof File) {
       return input.name.split(".").pop().toLowerCase();

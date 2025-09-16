@@ -5,17 +5,20 @@
   "author": "Lauri Tunnela <lauri@tunne.la>",
   "license": "MIT",
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
-  "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./assets/*": "./dist/assets/*"
-  },
+  "main": "./dist/index.node.cjs",
+  "module": "./dist/index.node.js",
+  "browser": "./dist/index.browser.js",
   "unpkg": "./dist/index.umd.js",
   "jsdelivr": "./dist/index.umd.js",
+  "exports": {
+    ".": {
+      "import": {
+        "browser": "./dist/index.browser.js",
+        "default": "./dist/index.node.js"
+      },
+      "require": "./dist/index.node.cjs"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -23,7 +26,7 @@
     "ifc-x-convert": "bin/cli.js"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vite build --config vite.config.browser.js && vite build --config vite.config.node.js",
     "examples": "vite --config vite.config.examples.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -33,7 +36,7 @@
     "SQLite",
     "converter",
     "conversion",
-    "Node.js",
+    "node",
     "browser",
     "CLI",
     "BIM",
