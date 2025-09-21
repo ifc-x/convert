@@ -23,13 +23,6 @@ export default class FragWriterBrowser extends BaseWriter {
   /** @type {string[]} Supported input types */
   static inputs = ["ifc"];
 
-  constructor() {
-    super();
-
-    this.serializer = new IfcImporter();
-    this.serializer.wasm = { absolute: true, path: 'https://unpkg.com/web-ifc@latest/' };
-  }
-
   /**
    * Write parsed data into a fragment format.
    *
@@ -46,7 +39,10 @@ export default class FragWriterBrowser extends BaseWriter {
     this.progressCallback = progressCallback;
     this.emitProgress();
 
-    const fragmentBytes = await this.serializer.process({
+    const serializer = new IfcImporter();
+    serializer.wasm = { absolute: true, path: 'https://unpkg.com/web-ifc@latest/' };
+
+    const fragmentBytes = await serializer.process({
       bytes: input,
       progressCallback: (progress, data) => {
         this.progress = progress;
@@ -54,6 +50,8 @@ export default class FragWriterBrowser extends BaseWriter {
         this.emitProgress();
       }
     });
+
+    serializer.clean();
 
     return fragmentBytes;
   }

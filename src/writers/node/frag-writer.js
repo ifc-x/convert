@@ -25,12 +25,6 @@ export default class FragWriterNode extends BaseWriter {
   /** @type {string[]} Supported input types */
   static inputs = ["ifc"];
 
-  constructor() {
-    super();
-
-    this.serializer = new IfcImporter();
-  }
-
   /**
    * Write parsed data into a fragment format.
    *
@@ -47,11 +41,13 @@ export default class FragWriterNode extends BaseWriter {
     this.progressCallback = progressCallback;
     this.emitProgress();
 
+    const serializer = new IfcImporter();
+
     const wasmPath = await downloadFileToLocal('https://unpkg.com/web-ifc@latest/web-ifc-node.wasm');
 
-    this.serializer.wasm = { absolute: true, path: dirname(wasmPath) + '/' };
+    serializer.wasm = { absolute: true, path: dirname(wasmPath) + '/' };
 
-    const fragmentBytes = await this.serializer.process({
+    const fragmentBytes = await serializer.process({
       bytes: input,
       progressCallback: (progress, data) => {
         this.progress = progress;
@@ -60,7 +56,7 @@ export default class FragWriterNode extends BaseWriter {
       }
     });
 
-    console.log('FRAG', fragmentBytes.length);
+    serializer.clean();
 
     return fragmentBytes;
   }

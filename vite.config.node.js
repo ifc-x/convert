@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import { terser } from 'rollup-plugin-terser';
 
 export default defineConfig({
   build: {
@@ -13,17 +12,14 @@ export default defineConfig({
           format: 'cjs',
           entryFileNames: 'index.node.cjs',
           compact: true,
-          plugins: [terser()],
         },
         {
           format: 'es',
           entryFileNames: 'index.node.js',
           compact: true,
-          plugins: [terser()],
         },
       ],
     },
-    minify: false,
     ssr: true
   },
 });

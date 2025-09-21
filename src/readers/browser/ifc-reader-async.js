@@ -47,9 +47,4 @@ export default class IfcReaderAsyncBrowser {
       }
     });
   }
-
-  terminate() {
-    this.worker.terminate();
-  }
 }
-

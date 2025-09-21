@@ -9,14 +9,6 @@ export default class IfcReaderBrowser extends BaseReader {
   static priority = 10;
   static outputs = ["tabular", "ifc"];
 
-  constructor() {
-    super();
-
-    this.ifcAPI = new WebIfc.IfcAPI();
-
-    this.modelID = null;
-  }
-
   async read(input, { type, progressCallback }) {
     if (type == "ifc") {
       return input;
@@ -26,6 +18,10 @@ export default class IfcReaderBrowser extends BaseReader {
     this.progressCallback = progressCallback;
 
     this.emitProgress();
+
+    this.modelID = null;
+
+    this.ifcAPI = new WebIfc.IfcAPI();
     
     this.ifcAPI.SetWasmPath('https://unpkg.com/web-ifc@latest/', true);
 
@@ -266,6 +262,7 @@ export default class IfcReaderBrowser extends BaseReader {
         return;
     }
     this.ifcAPI.CloseModel(this.modelID);
+    this.ifcAPI.Dispose();
 
     this.modelID = null;
   }

@@ -44,9 +44,4 @@ export default class SqliteWriterAsyncBrowser {
       }
     });
   }
-
-  terminate() {
-    this.worker.terminate();
-  }
 }
-

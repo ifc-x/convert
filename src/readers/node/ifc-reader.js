@@ -8,14 +8,6 @@ export default class IfcReaderNode extends BaseReader {
   static environments = ["node"];
   static priority = 10;
   static outputs = ["tabular", "ifc"];
-  
-  constructor() {
-    super();
-    
-    this.ifcAPI = new WebIfc.IfcAPI();
-
-    this.modelID = null;
-  }
 
   async read(input, { type, progressCallback }) {
     if (type == "ifc") {
@@ -27,6 +19,10 @@ export default class IfcReaderNode extends BaseReader {
 
     this.emitProgress();
 
+    this.modelID = null;
+    
+    this.ifcAPI = new WebIfc.IfcAPI();
+    
     await this.ifcAPI.Init();
     
     this.ifcAPI.SetLogLevel(WebIfc.LogLevel.LOG_LEVEL_OFF);
@@ -264,6 +260,7 @@ export default class IfcReaderNode extends BaseReader {
         return;
     }
     this.ifcAPI.CloseModel(this.modelID);
+    this.ifcAPI.Dispose();
 
     this.modelID = null;
   }

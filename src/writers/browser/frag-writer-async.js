@@ -44,9 +44,4 @@ export default class FragWriterAsyncBrowser {
       }
     });
   }
-
-  terminate() {
-    this.worker.terminate();
-  }
 }
-

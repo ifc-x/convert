@@ -55,7 +55,6 @@
     "@vitest/browser": "^3.2.4",
     "playwright": "^1.55.0",
     "prettier": "^3.6.2",
-    "rollup-plugin-terser": "^7.0.2",
     "vite": "^7.1.5",
     "vitest": "^3.2.4"
   }

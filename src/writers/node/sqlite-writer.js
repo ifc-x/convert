@@ -1,5 +1,5 @@
 import { BaseWriter } from "../../adapters/base-writer.js";
-import { Database } from "sqlite3";
+import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 import { readFileSync } from "fs";
 import { tmpdir } from "os";
@@ -49,7 +49,7 @@ export default class SqliteWriter extends BaseWriter {
 
     const db = await open({
       filename: ":memory:",
-      driver: Database,
+      driver: sqlite3.Database,
     });
 
     await db.exec("PRAGMA foreign_keys = OFF;");

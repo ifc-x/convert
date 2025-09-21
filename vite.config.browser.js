@@ -1,5 +1,4 @@
 import { defineConfig } from 'vite';
-import { terser } from 'rollup-plugin-terser';
 
 export default defineConfig({
   build: {
@@ -15,7 +14,6 @@ export default defineConfig({
           format: 'es',
           inlineDynamicImports: false,
           manualChunks: (id) => 'one chunk',
-          plugins: [terser()],
         },
         {
           format: 'umd',
@@ -23,10 +21,8 @@ export default defineConfig({
           inlineDynamicImports: false,
           manualChunks: (id) => 'one chunk',
           footer: 'window.IFCx ||= {}; window.IFCx.convert = IFCxConvert.convert;',
-          plugins: [terser()],
         },
       ],
     },
-    minify: false,
   },
 });
