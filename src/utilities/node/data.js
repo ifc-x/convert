@@ -1,7 +1,7 @@
-import fs from "fs";
-import os from "os";
-import path from "path";
-import crypto from "crypto";
+import { existsSync, mkdirSync, writeFileSync } from "fs";
+import { tmpdir } from "os";
+import { join, basename, dirname } from "path";
+import { createHash } from "crypto";
 
 /**
  * Downloads a file using fetch and caches it in the OS temp directory.
@@ -11,15 +11,15 @@ import crypto from "crypto";
  * @returns {Promise<string>} - Path to cached file
  */
 export async function downloadFileToLocal(url) {
-  const hash = crypto.createHash("sha256").update(url).digest("hex");
-  const cacheDir = path.join(os.tmpdir(), hash);
-  const fileName = path.basename(new URL(url).pathname);
-  const filePath = path.join(cacheDir, fileName);
+  const hash = createHash("sha256").update(url).digest("hex");
+  const cacheDir = join(tmpdir(), hash);
+  const fileName = basename(new URL(url).pathname);
+  const filePath = join(cacheDir, fileName);
 
-  if (!fs.existsSync(cacheDir)) {
-    fs.mkdirSync(cacheDir, { recursive: true });
+  if (!existsSync(cacheDir)) {
+    mkdirSync(cacheDir, { recursive: true });
   }
-  if (fs.existsSync(filePath)) {
+  if (existsSync(filePath)) {
     return filePath;
   }
   const res = await fetch(url);
@@ -29,7 +29,7 @@ export async function downloadFileToLocal(url) {
   }
   const buffer = Buffer.from(await res.arrayBuffer());
 
-  fs.writeFileSync(filePath, buffer);
+  writeFileSync(filePath, buffer);
 
   return filePath;
 }

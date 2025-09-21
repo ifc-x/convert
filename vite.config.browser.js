@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite';
+import { terser } from 'rollup-plugin-terser';
 
 export default defineConfig({
   build: {
     emptyOutDir: true,
     lib: {
-      entry: './src/index.browser.js',
+      entry: './src/env/browser.js',
       fileName: (format) =>
         format === 'es' ? 'index.browser.js' : 'index.umd.js',
     },
@@ -14,6 +15,7 @@ export default defineConfig({
           format: 'es',
           inlineDynamicImports: false,
           manualChunks: (id) => 'one chunk',
+          plugins: [terser()],
         },
         {
           format: 'umd',
@@ -21,8 +23,10 @@ export default defineConfig({
           inlineDynamicImports: false,
           manualChunks: (id) => 'one chunk',
           footer: 'window.IFCx ||= {}; window.IFCx.convert = IFCxConvert.convert;',
+          plugins: [terser()],
         },
       ],
     },
+    minify: false,
   },
 });

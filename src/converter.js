@@ -1,4 +1,5 @@
 import { registry } from "./registry.js";
+import { ENV } from "./utilities/env.js";
 
 /**
  * Class for converting IFC files to various formats like SQLite or Excel.
@@ -12,7 +13,7 @@ export default class Converter {
    * @param {Function} [options.writerClass] - Forced writer class to use instead of auto-detection.
    */
   constructor({ env, readerClass, writerClass } = {}) {
-    this.env = env || (typeof process !== 'undefined' && process?.versions?.node ? "node" : "browser");
+    this.env = env || ENV;
     this.forcedReader = readerClass;
     this.forcedWriter = writerClass;
     this.middleware = [];
@@ -26,25 +27,6 @@ export default class Converter {
   use(fn) {
     this.middleware.push(fn);
     return this;
-  }
-
-  /**
-   * Detect the type/extension of the input file or blob.
-   * @param {string|File|Blob} input - The input to detect the type of.
-   * @returns {string} The detected file type (extension).
-   * @throws {Error} When type cannot be detected.
-   */
-  detectType(input) {
-    if (typeof input === "string" && input.includes(".")) {
-      return input.split(".").pop().toLowerCase();
-    }
-    if (typeof File !== "undefined" && input instanceof File) {
-      return input.name.split(".").pop().toLowerCase();
-    }
-    if (typeof Blob !== "undefined" && input instanceof Blob && input.name) {
-      return input.name.split(".").pop().toLowerCase();
-    }
-    throw new Error("Unable to detect type — pass { type } explicitly");
   }
 
   /**
@@ -101,44 +83,15 @@ export default class Converter {
   }
 
   /**
-   * Convert input into a Uint8Array.
-   * @param {string|ArrayBuffer|Uint8Array|File|Blob} input - The input to convert.
-   * @returns {Promise<Uint8Array>} The input as a Uint8Array.
-   * @throws {Error} If input cannot be converted.
-   */
-  async toUint8Array(input) {
-    if (input instanceof Uint8Array) {
-      return input;
-    }
-    if (input instanceof ArrayBuffer) {
-      return new Uint8Array(input);
-    }
-    if (typeof input === "string") {
-      const response = await fetch(input);
-      const buffer = await response.arrayBuffer();
-      return new Uint8Array(buffer);
-    }
-    if (
-      (typeof File !== "undefined" && input instanceof File) ||
-      (typeof Blob !== "undefined" && input instanceof Blob)
-    ) {
-      const buffer = await input.arrayBuffer();
-
-      return new Uint8Array(buffer);
-    }
-    throw new Error("Cannot convert input to Uint8Array");
-  }
-
-  /**
    * Convert a file or buffer to the desired output format using optional middleware.
-   * @param {string|ArrayBuffer|Uint8Array|File|Blob} input - Input file or data.
+   * @param {Uint8Array} input - Input data.
    * @param {Object} [options] - Conversion options.
    * @param {string} [options.type] - Explicit type of the input.
    * @param {Function} [options.progressCallback] - Callback for progress updates (0–100).
    * @returns {Promise<Uint8Array>} Converted output as a Uint8Array.
    */
   async convert(input, { inputType, outputType, progressCallback } = {}) {
-    const detectedInputType = inputType || this.detectType(input);
+    const detectedInputType = inputType;
     const detectedOutputType = outputType;
 
     this.progressCallback = progressCallback;
@@ -154,7 +107,7 @@ export default class Converter {
     const writer = new WriterClass();
 
     let data = await reader.read(
-      await this.toUint8Array(input), 
+      input, 
       { type: dataType, progressCallback: (p) => this.emitProgress(p * 0.5) }
     );
 

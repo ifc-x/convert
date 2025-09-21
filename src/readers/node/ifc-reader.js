@@ -1,6 +1,7 @@
 import * as WebIfc from 'web-ifc';
 import { BaseReader } from "../../adapters/base-reader.js";
 import { globalIdToGuid } from "../../utilities/guid.js";
+import { ELEMENTS } from "../../utilities/ifc.js";
 
 export default class IfcReaderNode extends BaseReader {
   static formats = ["ifc"];
@@ -8,80 +9,6 @@ export default class IfcReaderNode extends BaseReader {
   static priority = 10;
   static outputs = ["tabular", "ifc"];
   
-  entityTypes = [
-    // Spatial Elements
-    "IFCPROJECT",
-    "IFCSITE",
-    "IFCBUILDING",
-    "IFCBUILDINGSTOREY",
-    "IFCSPACE",
-    "IFCZONE",
-
-    // Building Elements
-    "IFCWALL",
-    "IFCSLAB",
-    "IFCBEAM",
-    "IFCCOLUMN",
-    "IFCDOOR",
-    "IFCWINDOW",
-    "IFCSTAIR",
-    "IFCSTAIRFLIGHT",
-    "IFCRAILING",
-    "IFCROOF",
-    "IFCCURTAINWALL",
-    "IFCMEMBER",
-    "IFCPILE",
-    "IFCFOOTING",
-    "IFCCOVERING",
-    "IFCCHIMNEY",
-    "IFCPLATE",
-    "IFCELEMENTASSEMBLY",
-    "IFCBUILDINGELEMENTPART",
-    "IFCBUILDINGELEMENTPROXY",
-
-    // Distribution Elements (MEP)
-    "IFCFLOWSEGMENT",
-    "IFCFLOWFITTING",
-    "IFCFLOWTERMINAL",
-    "IFCFLOWCONTROLLER",
-    "IFCDISTRIBUTIONCHAMBERELEMENT",
-    "IFCENERGYCONVERSIONDEVICE",
-    "IFCFLOWSTORAGEDEVICE",
-    "IFCFLOWMOVINGDEVICE",
-    "IFCFLOWTREATMENTDEVICE",
-
-    // Furnishings & Equipment
-    "IFCFURNISHINGELEMENT",
-    "IFCTRANSPORTELEMENT",
-    "IFCELECTRICALELEMENT",
-    "IFCEQUIPMENTELEMENT",
-
-    // Structural & Detailing
-    "IFCDISCRETEACCESSORY",
-    "IFCMECHANICALFASTENER",
-    "IFCREINFORCINGELEMENT",
-    "IFCREINFORCINGBAR",
-    "IFCREINFORCINGMESH",
-    "IFCTENDON",
-    "IFCTENDONANCHOR",
-
-    // Civil / Infrastructure (IFC4.3+)
-    "IFCALIGNMENT",
-    "IFCALIGNMENTELEMENT",
-    "IFCTRACKELEMENT",
-    "IFCBRIDGEPART",
-    "IFCGEOTECHNICALELEMENT",
-    "IFCROAD",
-    "IFCCIVILELEMENT",
-
-    // Features & Openings
-    "IFCOPENINGELEMENT",
-    "IFCVOIDINGFEATURE",
-    "IFCFEATUREELEMENTADDITION",
-    "IFCFEATUREELEMENTSUBTRACTION",
-    "IFCPROJECTIONELEMENT"
-  ];
-
   constructor() {
     super();
     
@@ -208,7 +135,7 @@ export default class IfcReaderNode extends BaseReader {
       return acc;
     }, {});
 
-    for (const entityTypeName of this.entityTypes) {
+    for (const entityTypeName of ELEMENTS) {
       const ids = this.ifcAPI.GetLineIDsWithType(this.modelID, WebIfc[entityTypeName]);
 
       for (let i = 0; i < ids.size(); i++) {
@@ -260,7 +187,7 @@ export default class IfcReaderNode extends BaseReader {
   updateTotalEntities() {
     this.totalEntities = 0;
 
-    const entityTypes = this.entityTypes.slice(0);
+    const entityTypes = ELEMENTS.slice(0);
     entityTypes.push('IFCRELDEFINESBYPROPERTIES');
 
     for (const entityTypeName of entityTypes) {

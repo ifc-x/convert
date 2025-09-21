@@ -1,4 +1,4 @@
-import { convert } from '../src/index.js';
+import { convert } from '../src/index.browser.js';
 
 const fileInput = document.getElementById('fileInput');
 const outputTypeSelect = document.getElementById('outputType');

@@ -1,15 +1,6 @@
 import Converter from "./converter.js";
 import { registry } from "./registry.js";
-
-import IfcReaderBrowser from "./readers/browser/ifc-reader-async.js";
-import FragReaderBrowser from "./readers/browser/frag-reader-async.js";
-import FragWriterBrowser from "./writers/browser/frag-writer-async.js";
-import SqliteWriterBrowser from "./writers/browser/sqlite-writer-async.js";
-
-registry.addReader(IfcReaderBrowser);
-registry.addReader(FragReaderBrowser);
-registry.addWriter(FragWriterBrowser);
-registry.addWriter(SqliteWriterBrowser);
+import { toUint8Array, detectType } from './utilities/data.js';
 
 /**
  * Quick convert utility using global registry.
@@ -25,13 +16,16 @@ registry.addWriter(SqliteWriterBrowser);
  *   - progressCallback: progress callback function
  */
 export async function convert(input, options = {}) {
-  const { middleware = [], readerClass, writerClass, env, inputType, outputType, progressCallback } = options;
+  const { middleware = [], readerClass, writerClass, env, outputType, progressCallback } = options;
+  let { inputType } = options;
+
+  inputType ||= detectType(input);
 
   const converter = new Converter({ env, readerClass, writerClass });
 
   middleware.forEach(fn => converter.use(fn));
 
-  return converter.convert(input, { inputType, outputType, progressCallback });
+  return await converter.convert(await toUint8Array(input), { inputType, outputType, progressCallback });
 }
 
 export { Converter, registry };

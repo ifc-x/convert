@@ -27,6 +27,8 @@
   },
   "scripts": {
     "build": "vite build --config vite.config.browser.js && vite build --config vite.config.node.js",
+    "build:node": "vite build --config vite.config.node.js",
+    "build:browser": "vite build --config vite.config.browser.js",
     "examples": "vite --config vite.config.examples.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -50,6 +52,10 @@
     "web-ifc": "^0.0.71"
   },
   "devDependencies": {
+    "@vitest/browser": "^3.2.4",
+    "playwright": "^1.55.0",
+    "prettier": "^3.6.2",
+    "rollup-plugin-terser": "^7.0.2",
     "vite": "^7.1.5",
     "vitest": "^3.2.4"
   }

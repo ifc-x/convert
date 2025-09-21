@@ -1,9 +1,9 @@
 import { BaseWriter } from "../../adapters/base-writer.js";
-import sqlite3 from "sqlite3";
+import { Database } from "sqlite3";
 import { open } from "sqlite";
-import fs from "fs";
-import os from "os";
-import path from "path";
+import { readFileSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
 
 /**
  * SQLite writer for persisting IFC/FRAG data into a relational database file.
@@ -49,7 +49,7 @@ export default class SqliteWriter extends BaseWriter {
 
     const db = await open({
       filename: ":memory:",
-      driver: sqlite3.Database,
+      driver: Database,
     });
 
     await db.exec("PRAGMA foreign_keys = OFF;");
@@ -130,7 +130,7 @@ export default class SqliteWriter extends BaseWriter {
       }
     }
 
-    const tempFilePath = path.join(os.tmpdir(), `tempdb-${Date.now()}.sqlite`);
+    const tempFilePath = join(tmpdir(), `tempdb-${Date.now()}.sqlite`);
     await new Promise((resolve, reject) => {
       const backup = db.getDatabaseInstance().backup(tempFilePath);
       backup.step(-1, function (err) {
@@ -148,7 +148,7 @@ export default class SqliteWriter extends BaseWriter {
       });
     });
 
-    const data = new Uint8Array(fs.readFileSync(tempFilePath));
+    const data = new Uint8Array(readFileSync(tempFilePath));
 
     await db.close();
     

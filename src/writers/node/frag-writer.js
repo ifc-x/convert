@@ -1,9 +1,7 @@
 import { IfcImporter } from "@thatopen/fragments";
 import { BaseWriter } from "../../adapters/base-writer.js";
-import { downloadFileToLocal } from "../../utilities/download.js";
-import sqlite3 from "sqlite3";
-import { open } from "sqlite";
-import path from "path";
+import { downloadFileToLocal } from "../../utilities/node/data.js";
+import { dirname } from "path";
 
 /**
  * SQLite writer for persisting IFC/FRAG data into a relational database file.
@@ -51,7 +49,7 @@ export default class FragWriterNode extends BaseWriter {
 
     const wasmPath = await downloadFileToLocal('https://unpkg.com/web-ifc@latest/web-ifc-node.wasm');
 
-    this.serializer.wasm = { absolute: true, path: path.dirname(wasmPath) + '/' };
+    this.serializer.wasm = { absolute: true, path: dirname(wasmPath) + '/' };
 
     const fragmentBytes = await this.serializer.process({
       bytes: input,
@@ -61,6 +59,8 @@ export default class FragWriterNode extends BaseWriter {
         this.emitProgress();
       }
     });
+
+    console.log('FRAG', fragmentBytes.length);
 
     return fragmentBytes;
   }

@@ -1,6 +1,7 @@
 import { SingleThreadedFragmentsModel } from "@thatopen/fragments";
 import { BaseReader } from "../../adapters/base-reader.js";
 import { globalIdToGuid } from "../../utilities/guid.js";
+import { ELEMENTS } from "../../utilities/ifc.js";
 
 class ExtendedSingleThreadedFragmentsModel extends SingleThreadedFragmentsModel {
   getVirtualModel() {
@@ -13,84 +14,6 @@ export default class FragReaderBrowser extends BaseReader {
   static environments = ["browser"];
   static priority = 10;
   static outputs = ["tabular"];
-
-  entityTypes = [
-    // Spatial Elements
-    "IFCPROJECT",
-    "IFCSITE",
-    "IFCBUILDING",
-    "IFCBUILDINGSTOREY",
-    "IFCSPACE",
-    "IFCZONE",
-
-    // Building Elements
-    "IFCWALL",
-    "IFCSLAB",
-    "IFCBEAM",
-    "IFCCOLUMN",
-    "IFCDOOR",
-    "IFCWINDOW",
-    "IFCSTAIR",
-    "IFCSTAIRFLIGHT",
-    "IFCRAILING",
-    "IFCROOF",
-    "IFCCURTAINWALL",
-    "IFCMEMBER",
-    "IFCPILE",
-    "IFCFOOTING",
-    "IFCCOVERING",
-    "IFCCHIMNEY",
-    "IFCPLATE",
-    "IFCELEMENTASSEMBLY",
-    "IFCBUILDINGELEMENTPART",
-    "IFCBUILDINGELEMENTPROXY",
-
-    // Distribution Elements (MEP)
-    "IFCFLOWSEGMENT",
-    "IFCFLOWFITTING",
-    "IFCFLOWTERMINAL",
-    "IFCFLOWCONTROLLER",
-    "IFCDISTRIBUTIONCHAMBERELEMENT",
-    "IFCENERGYCONVERSIONDEVICE",
-    "IFCFLOWSTORAGEDEVICE",
-    "IFCFLOWMOVINGDEVICE",
-    "IFCFLOWTREATMENTDEVICE",
-
-    // Furnishings & Equipment
-    "IFCFURNISHINGELEMENT",
-    "IFCTRANSPORTELEMENT",
-    "IFCELECTRICALELEMENT",
-    "IFCEQUIPMENTELEMENT",
-
-    // Structural & Detailing
-    "IFCDISCRETEACCESSORY",
-    "IFCMECHANICALFASTENER",
-    "IFCREINFORCINGELEMENT",
-    "IFCREINFORCINGBAR",
-    "IFCREINFORCINGMESH",
-    "IFCTENDON",
-    "IFCTENDONANCHOR",
-
-    // Civil / Infrastructure (IFC4.3+)
-    "IFCALIGNMENT",
-    "IFCALIGNMENTELEMENT",
-    "IFCTRACKELEMENT",
-    "IFCBRIDGEPART",
-    "IFCGEOTECHNICALELEMENT",
-    "IFCROAD",
-    "IFCCIVILELEMENT",
-
-    // Features & Openings
-    "IFCOPENINGELEMENT",
-    "IFCVOIDINGFEATURE",
-    "IFCFEATUREELEMENTADDITION",
-    "IFCFEATUREELEMENTSUBTRACTION",
-    "IFCPROJECTIONELEMENT"
-  ];
-
-  constructor() {
-    super();
-  }
 
   async read(input, { progressCallback }) {
     this.initProgress();
@@ -205,7 +128,7 @@ export default class FragReaderBrowser extends BaseReader {
     }, {});
 
     const items = this.model.getItemsOfCategories(
-      this.entityTypes.map((type) => new RegExp('^' + type + '$'))
+      ELEMENTS.map((type) => new RegExp('^' + type + '$'))
     );
 
     for (const ids of Object.values(items)) {
@@ -272,7 +195,7 @@ export default class FragReaderBrowser extends BaseReader {
   
   updateTotalEntities() {
     const items = this.model.getItemsOfCategories(
-      this.entityTypes.map((type) => new RegExp('^' + type + '$'))
+      ELEMENTS.map((type) => new RegExp('^' + type + '$'))
     );
 
     this.totalEntities = Object.values(items).reduce(

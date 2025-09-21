@@ -7,3 +7,4 @@ dist/
 *.db3
 *.sqlite
 *.sqlite3
+__screenshots__
