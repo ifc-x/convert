@@ -38,7 +38,7 @@
     "prepare": "husky",
     "preversion": "npm run build && npm run test && git add -f dist",
     "version": "git commit -m 'chore(build): update dist for version %s' || true",
-    "postversion": "git push --follow-tags",
+    "postversion": "git push --follow-tags && npm publish",
     "prepublishOnly": "npm run build && npm run test"
   },
   "keywords": [
