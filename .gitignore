@@ -1,10 +1,16 @@
 .DS_Store
 node_modules/
 dist/
+__screenshots__
 *.ifc
 *.frag
 *.db
 *.db3
 *.sqlite
 *.sqlite3
-__screenshots__
+!test/fixtures/*.ifc
+!test/fixtures/*.frag
+!test/fixtures/*.db
+!test/fixtures/*.db3
+!test/fixtures/*.sqlite
+!test/fixtures/*.sqlite3

@@ -30,7 +30,11 @@
     "build:node": "vite build --config vite.config.node.js",
     "build:browser": "vite build --config vite.config.browser.js",
     "examples": "vite --config vite.config.examples.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npm run test:node && npm run test:browser",
+    "test:node": "vitest run --environment node",
+    "test:node:watch": "vitest --environment node --watch",
+    "test:browser": "vitest run --browser",
+    "test:browser:watch": "vitest --browser --watch"
   },
   "keywords": [
     "IFC",
