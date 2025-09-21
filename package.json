@@ -34,7 +34,8 @@
     "test:node": "vitest run --environment node",
     "test:node:watch": "vitest --environment node --watch",
     "test:browser": "vitest run --browser",
-    "test:browser:watch": "vitest --browser --watch"
+    "test:browser:watch": "vitest --browser --watch",
+    "prepare": "husky"
   },
   "keywords": [
     "IFC",
@@ -56,7 +57,10 @@
     "web-ifc": "^0.0.71"
   },
   "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
     "@vitest/browser": "^3.2.4",
+    "husky": "^9.1.7",
     "playwright": "^1.55.0",
     "prettier": "^3.6.2",
     "vite": "^7.1.5",
