@@ -25,7 +25,7 @@ export async function convert(input, options = {}) {
 
   middleware.forEach(fn => converter.use(fn));
 
-  return await converter.convert(await toUint8Array(input), { inputType, outputType, progressCallback });
+  return converter.convert(await toUint8Array(input), { inputType, outputType, progressCallback });
 }
 
 export { Converter, registry };
