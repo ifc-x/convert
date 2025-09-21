@@ -41,6 +41,10 @@
     "postversion": "git push --follow-tags && npm publish",
     "prepublishOnly": "npm run build && npm run test"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ifc-x/convert.git"
+  },
   "keywords": [
     "IFC",
     "FRAG",
