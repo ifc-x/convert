@@ -71,7 +71,7 @@ const result = await convert(inputFile, {
 ```js
 import { Converter } from "@ifc-x/convert";
 
-const converter = new Converter({ env: "node" });
+const converter = new Converter();
 
 // Example middleware: modify data before writing
 converter.use(async (data) => {
@@ -79,7 +79,9 @@ converter.use(async (data) => {
   return data;
 });
 
-const result = await converter.convert("model.ifc", {
+const ifcBytes = new Uint8Array(/* ... */);
+
+const result = await converter.convert(ifcBytes, {
   inputType: "ifc",
   outputType: "sqlite",
 });
@@ -147,7 +149,7 @@ Readers and writers must define:
 #### Example: Registering a custom writer
 
 ```js
-class CustomWriter {
+class CustomExcelWriter {
   static environments = ["node"];
   static formats = ["xlsx"];
   static priority = 10;
@@ -160,7 +162,7 @@ class CustomWriter {
 
 import { registry } from "@ifc-x/convert";
 
-registry.addWriter(CustomWriter);
+registry.addWriter(CustomExcelWriter);
 ```
 
 ---
@@ -169,8 +171,9 @@ registry.addWriter(CustomWriter);
 
 ### Scripts
 
-* `npm run examples` – Run examples with Vite
-* `npm test` – Run tests (currently placeholder)
+* `npm run examples` – Run examples
+* `npm build` – Build dist version
+* `npm test` – Run tests
 
 ---
 
