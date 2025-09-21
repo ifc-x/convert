@@ -36,7 +36,7 @@
     "test:browser": "vitest run --browser",
     "test:browser:watch": "vitest --browser --watch",
     "prepare": "husky",
-    "preversion": "npm run test && npm run build && git add -f dist",
+    "preversion": "npm run build && npm run test && git add -f dist",
     "version": "git commit -m 'chore(build): update dist for version %s' || true",
     "postversion": "git push --follow-tags",
     "prepublishOnly": "npm run build"
