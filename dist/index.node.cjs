@@ -192,16 +192,23 @@ class Converter {
     const { ReaderClass, WriterClass, dataType } = pair;
     const reader = new ReaderClass();
     const writer = new WriterClass();
+    let readerProgressRatio = reader.emitsProgress(dataType) ? 0.5 : 0;
+    let writerProgressRatio = writer.emitsProgress(dataType) ? 0.5 : 0;
+    if (!readerProgressRatio && writerProgressRatio) {
+      writerProgressRatio = 1;
+    } else if (readerProgressRatio && !writerProgressRatio) {
+      readerProgressRatio = 1;
+    }
     let data = await reader.read(
       input,
-      { type: dataType, progressCallback: (p) => this.emitProgress(p * 0.5) }
+      { type: dataType, progressCallback: (p) => this.emitProgress(p * readerProgressRatio) }
     );
     for (const fn of this.middleware) {
       data = await fn(data);
     }
     return writer.write(
       data,
-      { type: dataType, progressCallback: (p) => this.emitProgress(0.5 + p * 0.5) }
+      { type: dataType, progressCallback: (p) => this.emitProgress(readerProgressRatio + p * writerProgressRatio) }
     );
   }
 }
@@ -249,6 +256,9 @@ class BaseReader {
   static priority = 0;
   async read(input, options = {}) {
     throw new Error("read() not implemented");
+  }
+  emitsProgress(type) {
+    return true;
   }
 }
 const base64Chars = [
@@ -649,6 +659,9 @@ class IfcReaderNode extends BaseReader {
     this.close();
     return { columns, rows, relations };
   }
+  emitsProgress(type) {
+    return type != "ifc";
+  }
   updateTotalEntities() {
     this.totalEntities = 0;
     const entityTypes = ELEMENTS.slice(0);
@@ -970,6 +983,9 @@ class BaseWriter {
   static priority = 0;
   async write(data, options = {}) {
     throw new Error("write() not implemented");
+  }
+  emitsProgress(type) {
+    return true;
   }
 }
 async function downloadFileToLocal(url) {

@@ -1,4 +1,4 @@
-class y {
+class v {
   constructor() {
     this.readers = [], this.writers = [];
   }
@@ -77,8 +77,8 @@ class y {
     return null;
   }
 }
-const l = new y(), g = typeof process < "u" && process?.versions?.node, m = g ? "node" : "browser";
-class b {
+const l = new v(), k = typeof process < "u" && process?.versions?.node, C = k ? "node" : "browser";
+class R {
   /**
    * Create a new Converter instance.
    * @param {Object} [options] - Configuration options.
@@ -87,7 +87,7 @@ class b {
    * @param {Function} [options.writerClass] - Forced writer class to use instead of auto-detection.
    */
   constructor({ env: e, readerClass: r, writerClass: n } = {}) {
-    this.env = e || m, this.forcedReader = r, this.forcedWriter = n, this.middleware = [];
+    this.env = e || C, this.forcedReader = r, this.forcedWriter = n, this.middleware = [];
   }
   /**
    * Add a middleware function to transform data during conversion.
@@ -151,20 +151,22 @@ class b {
     const c = l.findCompatiblePair(this.env, t, o);
     if (!c)
       throw new Error(`No compatible reader/writer for ${t} → ${o}`);
-    const { ReaderClass: a, WriterClass: d, dataType: u } = c, h = new a(), w = new d();
-    let p = await h.read(
+    const { ReaderClass: a, WriterClass: d, dataType: f } = c, y = new a(), g = new d();
+    let u = y.emitsProgress(f) ? 0.5 : 0, w = g.emitsProgress(f) ? 0.5 : 0;
+    !u && w ? w = 1 : u && !w && (u = 1);
+    let h = await y.read(
       e,
-      { type: u, progressCallback: (f) => this.emitProgress(f * 0.5) }
+      { type: f, progressCallback: (p) => this.emitProgress(p * u) }
     );
-    for (const f of this.middleware)
-      p = await f(p);
-    return w.write(
-      p,
-      { type: u, progressCallback: (f) => this.emitProgress(0.5 + f * 0.5) }
+    for (const p of this.middleware)
+      h = await p(h);
+    return g.write(
+      h,
+      { type: f, progressCallback: (p) => this.emitProgress(u + p * w) }
     );
   }
 }
-async function v(i) {
+async function W(i) {
   if (i instanceof Uint8Array)
     return i;
   if (i instanceof ArrayBuffer)
@@ -179,29 +181,40 @@ async function v(i) {
   }
   throw new Error("Cannot convert input to Uint8Array");
 }
-function k(i) {
+function P(i) {
   if (typeof i == "string" && i.includes("."))
     return i.split(".").pop().toLowerCase();
   if (typeof File < "u" && i instanceof File || typeof Blob < "u" && i instanceof Blob && i.name)
     return i.name.split(".").pop().toLowerCase();
   throw new Error("Unable to detect type — pass { type } explicitly");
 }
-async function B(i, e = {}) {
+async function I(i, e = {}) {
   const { middleware: r = [], readerClass: n, writerClass: s, env: t, outputType: o, progressCallback: c } = e;
   let { inputType: a } = e;
-  a ||= k(i);
-  const d = new b({ env: t, readerClass: n, writerClass: s });
-  return r.forEach((u) => d.use(u)), d.convert(await v(i), { inputType: a, outputType: o, progressCallback: c });
+  a ||= P(i);
+  const d = new R({ env: t, readerClass: n, writerClass: s });
+  return r.forEach((f) => d.use(f)), d.convert(await W(i), { inputType: a, outputType: o, progressCallback: c });
 }
-class C {
+class m {
+  static formats = [];
+  static environments = [];
+  static priority = 0;
+  async read(e, r = {}) {
+    throw new Error("read() not implemented");
+  }
+  emitsProgress(e) {
+    return !0;
+  }
+}
+class q extends m {
   static formats = ["ifc"];
   static environments = ["browser"];
   static priority = 10;
   static outputs = ["tabular", "ifc"];
   constructor() {
-    this.worker = new Worker(new URL(
+    super(), this.worker = new Worker(new URL(
       /* @vite-ignore */
-      "/assets/ifc-reader-worker-CIdLR5ic.js",
+      "/assets/ifc-reader-worker-CBq1GLnT.js",
       import.meta.url
     ), {
       type: "module"
@@ -226,15 +239,15 @@ class C {
     }));
   }
 }
-class R {
+class E extends m {
   static formats = ["frag"];
   static environments = ["browser"];
   static priority = 10;
   static outputs = ["tabular"];
   constructor() {
-    this.worker = new Worker(new URL(
+    super(), this.worker = new Worker(new URL(
       /* @vite-ignore */
-      "/assets/frag-reader-worker-DBG-HGDV.js",
+      "/assets/frag-reader-worker-C2fC1HWE.js",
       import.meta.url
     ), {
       type: "module"
@@ -259,15 +272,26 @@ class R {
     });
   }
 }
-class W {
+class b {
+  static formats = [];
+  static environments = [];
+  static priority = 0;
+  async write(e, r = {}) {
+    throw new Error("write() not implemented");
+  }
+  emitsProgress(e) {
+    return !0;
+  }
+}
+class B extends b {
   static formats = ["frag"];
   static environments = ["browser"];
   static priority = 10;
   static inputs = ["ifc"];
   constructor() {
-    this.worker = new Worker(new URL(
+    super(), this.worker = new Worker(new URL(
       /* @vite-ignore */
-      "/assets/frag-writer-worker-DuXh9UCh.js",
+      "/assets/frag-writer-worker-CnwZw0CF.js",
       import.meta.url
     ), {
       type: "module"
@@ -292,15 +316,15 @@ class W {
     });
   }
 }
-class q {
+class A extends b {
   static formats = ["db", "db3", "sqlite", "sqlite3"];
   static environments = ["browser"];
   static priority = 10;
   static inputs = ["tabular"];
   constructor() {
-    this.worker = new Worker(new URL(
+    super(), this.worker = new Worker(new URL(
       /* @vite-ignore */
-      "/assets/sqlite-writer-worker-Btyf4S85.js",
+      "/assets/sqlite-writer-worker-8YJZ-0Mh.js",
       import.meta.url
     ), {
       type: "module"
@@ -325,12 +349,12 @@ class q {
     });
   }
 }
-l.addReader(C);
-l.addReader(R);
-l.addWriter(W);
-l.addWriter(q);
+l.addReader(q);
+l.addReader(E);
+l.addWriter(B);
+l.addWriter(A);
 export {
-  b as Converter,
-  B as convert,
+  R as Converter,
+  I as convert,
   l as registry
 };
