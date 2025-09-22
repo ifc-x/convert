@@ -6,4 +6,8 @@ export class BaseReader {
   async read(input, options = {}) {
     throw new Error("read() not implemented");
   }
+
+  emitsProgress(type) {
+    return true;
+  }
 }

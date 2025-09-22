@@ -181,6 +181,10 @@ export default class IfcReaderBrowser extends BaseReader {
 
     return { columns, rows, relations };
   }
+
+  emitsProgress(type) {
+    return type != "ifc";
+  }
   
   updateTotalEntities() {
     this.totalEntities = 0;

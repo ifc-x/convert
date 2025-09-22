@@ -6,4 +6,8 @@ export class BaseWriter {
   async write(data, options = {}) {
     throw new Error("write() not implemented");
   }
+
+  emitsProgress(type) {
+    return true;
+  }
 }
