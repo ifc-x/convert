@@ -1,10 +1,14 @@
-export default class IfcReaderAsyncBrowser {
+import { BaseReader } from "../../adapters/base-reader.js";
+
+export default class IfcReaderAsyncBrowser extends BaseReader {
   static formats = ["ifc"];
   static environments = ["browser"];
   static priority = 10;
   static outputs = ["tabular", "ifc"];
 
   constructor() {
+    super();
+
     this.worker = new Worker(new URL('./ifc-reader-worker.js', import.meta.url), {
       type: 'module'
     });

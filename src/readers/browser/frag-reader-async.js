@@ -1,10 +1,14 @@
-export default class FragReaderAsyncBrowser {
+import { BaseReader } from "../../adapters/base-reader.js";
+
+export default class FragReaderAsyncBrowser extends BaseReader {
   static formats = ["frag"];
   static environments = ["browser"];
   static priority = 10;
   static outputs = ["tabular"];
 
   constructor() {
+    super();
+    
     this.worker = new Worker(new URL('./frag-reader-worker.js', import.meta.url), {
       type: 'module'
     });

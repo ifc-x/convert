@@ -1,10 +1,14 @@
-export default class SqliteWriterAsyncBrowser {
+import { BaseWriter } from "../../adapters/base-writer.js";
+
+export default class SqliteWriterAsyncBrowser extends BaseWriter {
   static formats = ["db", "db3", "sqlite", "sqlite3"];
   static environments = ["browser"];
   static priority = 10;
   static inputs = ["tabular"];
 
   constructor() {
+    super();
+    
     this.worker = new Worker(new URL('./sqlite-writer-worker.js', import.meta.url), {
       type: 'module'
     });

@@ -1,10 +1,14 @@
-export default class FragWriterAsyncBrowser {
+import { BaseWriter } from "../../adapters/base-writer.js";
+
+export default class FragWriterAsyncBrowser extends BaseWriter {
   static formats = ["frag"];
   static environments = ["browser"];
   static priority = 10;
   static inputs = ["ifc"];
 
   constructor() {
+    super();
+    
     this.worker = new Worker(new URL('./frag-writer-worker.js', import.meta.url), {
       type: 'module'
     });
