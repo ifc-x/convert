@@ -55,9 +55,7 @@ Progress updates are printed to the console.
 ```js
 import { convert } from "@ifc-x/convert";
 
-const inputFile = "path/to/model.ifc";
-
-const result = await convert(inputFile, {
+const result = await convert("path/to/model.ifc", {
   inputType: "ifc",
   outputType: "sqlite",
   progressCallback: (p) => console.log(`Progress: ${p}%`),
